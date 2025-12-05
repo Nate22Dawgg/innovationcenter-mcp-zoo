@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES Get Variable Info Output",
+  "description": "Output schema for variable information",
+  "type": "object",
+  "properties": {
+    "variable": {
+      "type": "string",
+      "description": "Variable name"
+    },
+    "dataset": {
+      "type": "string",
+      "description": "Dataset ID"
+    },
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle"
+    },
+    "count": {
+      "type": "integer",
+      "description": "Total number of records"
+    },
+    "non_null_count": {
+      "type": "integer",
+      "description": "Number of non-null values"
+    },
+    "min_value": {
+      "description": "Minimum value"
+    },
+    "max_value": {
+      "description": "Maximum value"
+    },
+    "mean_value": {
+      "description": "Mean value"
+    },
+    "distinct_count": {
+      "type": "integer",
+      "description": "Number of distinct values"
+    },
+    "sample_values": {
+      "type": "array",
+      "description": "Sample values from the dataset",
+      "items": true
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if operation failed"
+    }
+  }
+}
+

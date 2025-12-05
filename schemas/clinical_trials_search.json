@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clinical Trials Search Input",
+  "description": "Input schema for searching clinical trials",
+  "type": "object",
+  "properties": {
+    "condition": {
+      "type": "string",
+      "description": "Medical condition or disease to search for",
+      "examples": ["cancer", "diabetes", "hypertension"]
+    },
+    "intervention": {
+      "type": "string",
+      "description": "Intervention type (drug, device, procedure, etc.)",
+      "examples": ["aspirin", "surgery", "lifestyle intervention"]
+    },
+    "location": {
+      "type": "string",
+      "description": "Geographic location (country, state, or city)",
+      "examples": ["United States", "California", "Boston"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["recruiting", "not yet recruiting", "active", "completed", "suspended", "terminated", "withdrawn"],
+      "description": "Trial recruitment status"
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["Phase 1", "Phase 2", "Phase 3", "Phase 4", "N/A"],
+      "description": "Clinical trial phase"
+    },
+    "study_type": {
+      "type": "string",
+      "enum": ["Interventional", "Observational", "Expanded Access"],
+      "description": "Type of study"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 20,
+      "description": "Maximum number of results to return"
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of results to skip for pagination"
+    }
+  },
+  "additionalProperties": false
+}
+

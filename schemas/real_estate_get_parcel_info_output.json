@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Property address"
+    },
+    "county": {
+      "type": "string",
+      "description": "County name"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation"
+    },
+    "status": {
+      "type": "string",
+      "description": "Status of the lookup",
+      "enum": ["success", "not_found", "stub", "error"]
+    },
+    "parcel_id": {
+      "type": "string",
+      "description": "Assessor Parcel Number"
+    },
+    "geometry": {
+      "type": "object",
+      "description": "Parcel boundary geometry (GeoJSON format)"
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Parcel attributes from GIS system"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if lookup failed"
+    }
+  }
+}
+

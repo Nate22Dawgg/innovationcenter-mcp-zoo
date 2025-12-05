@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clinical Trials Get Detail Output",
+  "description": "Output schema for detailed clinical trial information",
+  "type": "object",
+  "properties": {
+    "nct_id": {
+      "type": "string",
+      "pattern": "^NCT[0-9]{8}$",
+      "description": "ClinicalTrials.gov identifier"
+    },
+    "brief_title": {
+      "type": "string",
+      "description": "Brief title of the trial"
+    },
+    "official_title": {
+      "type": "string",
+      "description": "Official title of the trial"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of the trial"
+    },
+    "detailed_description": {
+      "type": "string",
+      "description": "Detailed description of the trial"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current overall status of the trial"
+    },
+    "phase": {
+      "type": "string",
+      "description": "Trial phase(s)"
+    },
+    "study_type": {
+      "type": "string",
+      "description": "Type of study"
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of conditions being studied"
+    },
+    "interventions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Intervention name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Intervention type"
+          },
+          "description": {
+            "type": "string",
+            "description": "Intervention description"
+          }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      },
+      "description": "List of interventions with details"
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["primary", "secondary"],
+            "description": "Outcome type"
+          },
+          "title": {
+            "type": "string",
+            "description": "Outcome measure title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Outcome description"
+          },
+          "time_frame": {
+            "type": "string",
+            "description": "Time frame for outcome measurement"
+          }
+        },
+        "required": ["type", "title"],
+        "additionalProperties": false
+      },
+      "description": "List of primary and secondary outcomes"
+    },
+    "enrollment": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Target enrollment or sampling method"
+        },
+        "actual": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Actual enrollment count"
+        },
+        "eligibility_criteria": {
+          "type": "string",
+          "description": "Eligibility criteria for participants"
+        }
+      },
+      "additionalProperties": false
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Location name or facility name"
+          },
+          "city": {
+            "type": "string",
+            "description": "City"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or province"
+          },
+          "zip": {
+            "type": "string",
+            "description": "ZIP or postal code"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country"
+          },
+          "status": {
+            "type": "string",
+            "description": "Location recruitment status"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "List of trial locations with details"
+    },
+    "contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Contact name"
+          },
+          "role": {
+            "type": "string",
+            "description": "Contact role"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone number"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "List of central contacts"
+    },
+    "sponsor": {
+      "type": "object",
+      "properties": {
+        "lead": {
+          "type": "string",
+          "description": "Lead sponsor name"
+        },
+        "collaborators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of collaborating sponsors"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dates": {
+      "type": "object",
+      "properties": {
+        "start_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Trial start date (ISO 8601)"
+        },
+        "completion_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Trial completion date (ISO 8601)"
+        },
+        "primary_completion_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Primary completion date (ISO 8601)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of reference citations"
+        }
+      },
+      "additionalProperties": false
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Link to trial details page"
+    }
+  },
+  "required": ["nct_id", "brief_title", "status"],
+  "additionalProperties": false
+}
+

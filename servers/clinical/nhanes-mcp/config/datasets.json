@@ -1,0 +1,67 @@
+{
+  "demographics": {
+    "name": "Demographics",
+    "file_prefix": "DEMO",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Demographic data including age, gender, race/ethnicity, education, income",
+    "key_variables": ["RIDAGEYR", "RIAGENDR", "RIDRETH3", "DMDEDUC2", "INDHHIN2"],
+    "data_type": "demographics"
+  },
+  "body_measures": {
+    "name": "Body Measures",
+    "file_prefix": "BMX",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Height, weight, BMI, waist circumference, and other body measurements",
+    "key_variables": ["BMXHT", "BMXWT", "BMXBMI", "BMXWAIST"],
+    "data_type": "examination"
+  },
+  "blood_pressure": {
+    "name": "Blood Pressure",
+    "file_prefix": "BPX",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Blood pressure measurements (systolic and diastolic)",
+    "key_variables": ["BPXSY1", "BPXDI1", "BPXSY2", "BPXDI2"],
+    "data_type": "examination"
+  },
+  "diabetes": {
+    "name": "Diabetes Questionnaire",
+    "file_prefix": "DIQ",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Diabetes questionnaire data including diagnosis, treatment, and complications",
+    "key_variables": ["DIQ010", "DIQ050", "DIQ160", "DIQ170"],
+    "data_type": "questionnaire"
+  },
+  "blood_pressure_questionnaire": {
+    "name": "Blood Pressure Questionnaire",
+    "file_prefix": "BPQ",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Blood pressure questionnaire data including diagnosis and treatment",
+    "key_variables": ["BPQ020", "BPQ030", "BPQ040A", "BPQ050A"],
+    "data_type": "questionnaire"
+  },
+  "cholesterol": {
+    "name": "Cholesterol - Total",
+    "file_prefix": "TCHOL",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Total cholesterol laboratory data",
+    "key_variables": ["LBXTC"],
+    "data_type": "laboratory"
+  },
+  "glucose": {
+    "name": "Glucose",
+    "file_prefix": "GLU",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Fasting glucose and insulin laboratory data",
+    "key_variables": ["LBXGLU", "LBXIN"],
+    "data_type": "laboratory"
+  },
+  "complete_blood_count": {
+    "name": "Complete Blood Count",
+    "file_prefix": "CBC",
+    "cycles": ["2017-2018", "2019-2020", "2021-2022"],
+    "description": "Complete blood count laboratory data",
+    "key_variables": ["LBXWBCSI", "LBXRBCSI", "LBXHGB"],
+    "data_type": "laboratory"
+  }
+}
+

@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Search Companies Output",
+  "description": "Output schema for biotech company search results",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of companies returned"
+    },
+    "companies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "normalized_name": {
+            "type": "string",
+            "description": "Normalized company name"
+          },
+          "trial_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of clinical trials"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of trial phases"
+          },
+          "therapeutic_areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of therapeutic areas"
+          },
+          "sample_trials": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Sample of clinical trials"
+          }
+        },
+        "required": ["company_name", "trial_count"],
+        "additionalProperties": false
+      }
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "therapeutic_area": {
+          "type": ["string", "null"]
+        },
+        "stage": {
+          "type": ["string", "null"]
+        },
+        "location": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["count", "companies", "filters"],
+  "additionalProperties": false
+}
+

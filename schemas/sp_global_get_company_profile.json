@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Get Company Profile Input",
+  "description": "Input schema for retrieving comprehensive company profile from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "S&P Capital IQ company identifier (CIQ ID)",
+      "examples": ["CIQ0000000000000000"]
+    }
+  },
+  "required": ["company_id"],
+  "additionalProperties": false
+}
+

@@ -1,0 +1,57 @@
+{
+  "clinical_trial_search": {
+    "total": 100,
+    "count": 20,
+    "offset": 0,
+    "trials": [
+      {
+        "nct_id": "NCT01234567",
+        "title": "Test Clinical Trial",
+        "status": "Recruiting",
+        "phase": "Phase 3",
+        "condition": "Diabetes",
+        "intervention": "Test Drug"
+      }
+    ]
+  },
+  "hospital_price": {
+    "count": 1,
+    "total": 1,
+    "prices": [
+      {
+        "hospital_id": "test_hospital_123",
+        "hospital_name": "Test Hospital",
+        "cpt_code": "99213",
+        "price": 150.00,
+        "location": "New York, NY"
+      }
+    ]
+  },
+  "claim_line_item": {
+    "cpt_code": "99213",
+    "units": 1,
+    "charge_amount": 150.00,
+    "allowed_amount": 120.00,
+    "paid_amount": 100.00
+  },
+  "biotech_company": {
+    "company_name": "Test Biotech Inc",
+    "therapeutic_area": "Oncology",
+    "stage": "Phase 3",
+    "location": "Boston, MA",
+    "pipeline_count": 5
+  },
+  "property": {
+    "address": "123 Main St, New York, NY 10001",
+    "property_id": "test_prop_123",
+    "assessed_value": 500000,
+    "tax_amount": 10000
+  },
+  "nhanes_dataset": {
+    "dataset": "demographics",
+    "cycle": "2017-2018",
+    "variables": ["RIDAGEYR", "RIAGENDR", "RIDRETH3"],
+    "row_count": 1000
+  }
+}
+

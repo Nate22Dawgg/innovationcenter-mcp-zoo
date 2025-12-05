@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clinical Trials Search Output",
+  "description": "Output schema for clinical trials search results",
+  "type": "object",
+  "properties": {
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching trials found"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of trials returned in this response"
+    },
+    "offset": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Offset used for this query"
+    },
+    "trials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nct_id": {
+            "type": "string",
+            "pattern": "^NCT[0-9]{8}$",
+            "description": "ClinicalTrials.gov identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "Trial title"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current recruitment status"
+          },
+          "phase": {
+            "type": "string",
+            "description": "Trial phase"
+          },
+          "conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of conditions being studied"
+          },
+          "interventions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of interventions"
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of trial locations"
+          },
+          "lead_sponsor": {
+            "type": "string",
+            "description": "Lead sponsor name"
+          },
+          "start_date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Trial start date (ISO 8601)"
+          },
+          "completion_date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Trial completion date (ISO 8601) if available"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link to trial details"
+          }
+        },
+        "required": ["nct_id", "title", "status"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["total", "count", "offset", "trials"],
+  "additionalProperties": false
+}
+

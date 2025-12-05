@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Parse EDI 837 Input",
+  "description": "Input schema for parsing EDI 837 Professional Claim files",
+  "type": "object",
+  "properties": {
+    "edi_content": {
+      "type": "string",
+      "description": "EDI file content as string"
+    },
+    "edi_file_path": {
+      "type": "string",
+      "description": "Path to EDI file (alternative to edi_content)"
+    }
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Get Company Info Input",
+  "description": "Input schema for getting comprehensive company information",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name",
+      "examples": ["Apple Inc.", "Microsoft Corporation"]
+    },
+    "cik": {
+      "type": "string",
+      "description": "Company CIK (10-digit zero-padded)",
+      "pattern": "^\\d{10}$"
+    },
+    "ticker": {
+      "type": "string",
+      "description": "Ticker symbol",
+      "examples": ["AAPL", "MSFT", "AMZN"]
+    }
+  },
+  "additionalProperties": false
+}
+

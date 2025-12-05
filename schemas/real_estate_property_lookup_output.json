@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Property address"
+    },
+    "property_data": {
+      "type": "object",
+      "description": "Comprehensive property data from BatchData.io",
+      "properties": {
+        "apn": {
+          "type": "string",
+          "description": "Assessor Parcel Number"
+        },
+        "property_type": {
+          "type": "string",
+          "description": "Property type"
+        },
+        "estimated_value": {
+          "type": "number",
+          "description": "Estimated property value"
+        },
+        "square_feet": {
+          "type": "number",
+          "description": "Square footage"
+        },
+        "bedrooms": {
+          "type": "integer",
+          "description": "Number of bedrooms"
+        },
+        "bathrooms": {
+          "type": "number",
+          "description": "Number of bathrooms"
+        },
+        "year_built": {
+          "type": "integer",
+          "description": "Year built"
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if lookup failed"
+    }
+  }
+}
+

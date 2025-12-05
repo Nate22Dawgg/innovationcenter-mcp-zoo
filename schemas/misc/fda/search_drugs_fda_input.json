@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drugs@FDA Input",
+  "description": "Input schema for searching Drugs@FDA database for approved drug products",
+  "type": "object",
+  "properties": {
+    "sponsor_name": {
+      "type": "string",
+      "description": "Sponsor/applicant name"
+    },
+    "application_number": {
+      "type": "string",
+      "description": "FDA application number (NDA, ANDA, BLA)"
+    },
+    "brand_name": {
+      "type": "string",
+      "description": "Brand/trade name of the drug"
+    },
+    "generic_name": {
+      "type": "string",
+      "description": "Generic name of the drug"
+    },
+    "active_ingredient": {
+      "type": "string",
+      "description": "Active ingredient name"
+    },
+    "dosage_form": {
+      "type": "string",
+      "description": "Dosage form"
+    },
+    "marketing_status": {
+      "type": "string",
+      "enum": ["Prescription", "Over-the-counter", "Discontinued", "None"],
+      "description": "Marketing status"
+    },
+    "count": {
+      "type": "string",
+      "description": "Field to group results by for counting"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 10,
+      "description": "Maximum number of results to return (1-100)"
+    },
+    "skip": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of results to skip for pagination"
+    }
+  },
+  "additionalProperties": false
+}
+

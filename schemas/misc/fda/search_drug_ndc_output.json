@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drug NDC Output",
+  "description": "Output schema for FDA NDC directory search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching NDC entries found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "ndc_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_ndc": {
+            "type": "string"
+          },
+          "proprietary_name": {
+            "type": "string"
+          },
+          "nonproprietary_name": {
+            "type": "string"
+          },
+          "labeler_name": {
+            "type": "string"
+          },
+          "dosage_form": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "marketing_category": {
+            "type": "string"
+          },
+          "application_number": {
+            "type": "string"
+          },
+          "marketing_start_date": {
+            "type": "string"
+          },
+          "marketing_end_date": {
+            "type": "string"
+          },
+          "active_ingredients": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "packaging": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "package_ndc": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "ndc_entries"],
+  "additionalProperties": false
+}
+

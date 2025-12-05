@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES Get Data Output",
+  "description": "Output schema for NHANES data query results",
+  "type": "object",
+  "properties": {
+    "dataset": {
+      "type": "string",
+      "description": "Dataset ID"
+    },
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle"
+    },
+    "count": {
+      "type": "integer",
+      "description": "Number of rows returned"
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Limit applied to query"
+    },
+    "filters": {
+      "type": "object",
+      "description": "Filters applied to query"
+    },
+    "variables": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "array", "items": {"type": "string"}}
+      ],
+      "description": "Variables selected"
+    },
+    "data": {
+      "type": "array",
+      "description": "Query results as array of objects",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if operation failed"
+    }
+  }
+}
+

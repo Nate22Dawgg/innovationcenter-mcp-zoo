@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Search Articles Output",
+  "description": "Output schema for PubMed article search results",
+  "type": "object",
+  "properties": {
+    "searchParameters": {
+      "type": "object",
+      "description": "The search parameters used for this query"
+    },
+    "effectiveESearchTerm": {
+      "type": "string",
+      "description": "The effective ESearch query term constructed from input parameters"
+    },
+    "totalFound": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of articles found matching the search criteria"
+    },
+    "retrievedPmidCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of PMIDs retrieved in this response"
+    },
+    "pmids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\d+$"
+      },
+      "description": "Array of PubMed Unique Identifiers (PMIDs) found"
+    },
+    "briefSummaries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pmid": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "journal": {
+            "type": "string"
+          },
+          "pubDate": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Brief summaries for top PMIDs (if fetchBriefSummaries > 0)"
+    },
+    "eSearchUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the ESearch API call made"
+    },
+    "eSummaryUrl": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "URL of the ESummary API call made (if brief summaries were fetched)"
+    }
+  },
+  "required": ["searchParameters", "effectiveESearchTerm", "totalFound", "retrievedPmidCount", "pmids", "briefSummaries", "eSearchUrl"],
+  "additionalProperties": false
+}
+

@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Get Company Profile Input",
+  "description": "Input schema for getting unified company profile",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name (e.g., 'Moderna', 'Pfizer')",
+      "examples": ["Moderna", "Pfizer", "BioNTech", "Gilead"]
+    }
+  },
+  "required": ["company_name"],
+  "additionalProperties": false
+}
+

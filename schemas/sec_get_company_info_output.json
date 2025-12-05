@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Get Company Info Output",
+  "description": "Output schema for company information",
+  "type": "object",
+  "properties": {
+    "cik": {
+      "type": "string",
+      "description": "Company CIK"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "ticker": {
+      "type": "string",
+      "description": "Ticker symbol"
+    },
+    "sic": {
+      "type": ["string", "null"],
+      "description": "Standard Industrial Classification code"
+    },
+    "sic_description": {
+      "type": ["string", "null"],
+      "description": "SIC description"
+    },
+    "exchanges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of stock exchanges"
+    },
+    "filing_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of filings"
+    },
+    "submissions": {
+      "type": "object",
+      "description": "Full submissions index data",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if request failed"
+    }
+  },
+  "additionalProperties": false
+}
+

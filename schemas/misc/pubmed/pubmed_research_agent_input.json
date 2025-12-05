@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Research Agent Input",
+  "description": "Input schema for generating structured research plans with literature search strategies",
+  "type": "object",
+  "properties": {
+    "project_title_suggestion": {
+      "type": "string",
+      "minLength": 5,
+      "description": "A concise and descriptive title for the research project."
+    },
+    "primary_research_goal": {
+      "type": "string",
+      "minLength": 10,
+      "description": "The main scientific objective or central question the research aims to address."
+    },
+    "research_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "description": "Core scientific keywords or MeSH terms defining the research domain."
+    },
+    "organism_focus": {
+      "type": "string",
+      "description": "Primary organism(s) or model systems (e.g., \"Homo sapiens (iPSC-derived microglia)\", \"Mus musculus (5xFAD model)\")."
+    },
+    "p1_introduction_and_background": {
+      "type": "string",
+      "description": "Brief overview of the research area, its significance, and relevant background information leading to this study."
+    },
+    "p1_specific_research_question": {
+      "type": "string",
+      "description": "The precise, focused primary research question the study will answer."
+    },
+    "p1_knowledge_gap": {
+      "type": "string",
+      "description": "Statement clearly identifying the specific gap in current knowledge this research addresses."
+    },
+    "p1_primary_hypothesis": {
+      "type": "string",
+      "description": "The main, testable hypothesis. Should be clear, specific, and falsifiable."
+    },
+    "p1_secondary_questions_or_hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Any secondary questions or hypotheses to be explored."
+    },
+    "p1_pubmed_search_strategy_description": {
+      "type": "string",
+      "description": "Description of the primary literature search strategy (e.g., for PubMed), including key terms and database considerations."
+    },
+    "p1_literature_review_scope": {
+      "type": "string",
+      "description": "The defined scope for the literature review (e.g., timeframes, study types, key themes)."
+    },
+    "p1_lit_review_databases_and_approach": {
+      "type": "string",
+      "description": "Key databases (e.g., PubMed, EMBASE) and the search approach (e.g., iterative queries, snowballing)."
+    },
+    "p1_experimental_paradigm": {
+      "type": "string",
+      "description": "The overarching experimental design or study type (e.g., 'comparative multi-omics analysis', 'longitudinal cohort study')."
+    },
+    "p1_data_acquisition_plan_existing_data": {
+      "type": "string",
+      "description": "Strategy for identifying and retrieving relevant existing datasets (databases, data types, tools)."
+    },
+    "p1_data_acquisition_plan_new_data": {
+      "type": "string",
+      "description": "Plan for generating novel data (data types, experimental models, key procedures, deposition plan)."
+    },
+    "p1_blast_utilization_plan": {
+      "type": "string",
+      "description": "If applicable, how sequence alignment services (e.g., NCBI BLAST) will be used (purpose, programs, databases)."
+    },
+    "p1_controls_and_rigor": {
+      "type": "string",
+      "description": "Description of key experimental controls and measures to ensure scientific rigor and reproducibility."
+    },
+    "p1_methodological_challenges_and_mitigation": {
+      "type": "string",
+      "description": "Anticipated methodological challenges and proposed mitigation strategies."
+    },
+    "p2_data_collection_methods_wet_lab": {
+      "type": "string",
+      "description": "Specific wet-lab protocols if new data is generated (sample prep, treatments, instruments)."
+    },
+    "p2_data_collection_methods_dry_lab": {
+      "type": "string",
+      "description": "Execution details for data retrieval from databases (queries, tools, accessioning)."
+    },
+    "p2_data_preprocessing_and_qc_plan": {
+      "type": "string",
+      "description": "Pipeline for data cleaning, preprocessing (e.g., alignment, normalization), and quality control (metrics, thresholds, tools)."
+    },
+    "p3_data_analysis_strategy": {
+      "type": "string",
+      "description": "Core statistical and computational methods to analyze data and test hypotheses (tests, software, ML models if any)."
+    },
+    "p3_bioinformatics_pipeline_summary": {
+      "type": "string",
+      "description": "Summary of the bioinformatics pipeline for high-throughput data analysis (tools, downstream analyses)."
+    },
+    "p3_results_interpretation_framework": {
+      "type": "string",
+      "description": "Framework for evaluating findings against hypotheses (statistical significance, biological relevance)."
+    },
+    "p3_comparison_with_literature_plan": {
+      "type": "string",
+      "description": "Strategy for contextualizing results with existing literature and addressing discrepancies."
+    },
+    "p4_dissemination_manuscript_plan": {
+      "type": "string",
+      "description": "Plan for manuscript preparation (core message, target journal profile, key figures)."
+    },
+    "p4_dissemination_data_deposition_plan": {
+      "type": "string",
+      "description": "Strategy for depositing data in public repositories (types, repositories, FAIR principles)."
+    },
+    "p4_peer_review_and_publication_approach": {
+      "type": "string",
+      "description": "Approach to journal submission and addressing peer review."
+    },
+    "p4_future_research_directions": {
+      "type": "string",
+      "description": "Potential next steps, new questions, or translational applications arising from the research."
+    },
+    "cc_record_keeping_and_data_management": {
+      "type": "string",
+      "description": "Plan for record-keeping, version control, data storage, and DMP."
+    },
+    "cc_collaboration_strategy": {
+      "type": "string",
+      "description": "If applicable, strategy for collaboration, communication, roles, and authorship."
+    },
+    "cc_ethical_considerations": {
+      "type": "string",
+      "description": "Ethical considerations, IRB/IACUC approval plans, data privacy, RCR training."
+    },
+    "include_detailed_prompts_for_agent": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the tool will add more detailed instructive prompts/guidance within the output fields for a research agent. If false (default), it will primarily structure the provided inputs with minimal additional prompting."
+    }
+  },
+  "required": ["project_title_suggestion", "primary_research_goal", "research_keywords"],
+  "additionalProperties": false
+}
+

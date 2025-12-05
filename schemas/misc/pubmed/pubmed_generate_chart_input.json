@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Generate Chart Input",
+  "description": "Input schema for creating customizable PNG charts from structured publication data",
+  "type": "object",
+  "properties": {
+    "chartType": {
+      "type": "string",
+      "enum": ["bar", "line", "scatter", "pie", "doughnut", "bubble", "radar", "polarArea"],
+      "description": "Specifies the type of chart to generate."
+    },
+    "title": {
+      "type": "string",
+      "description": "The main title displayed above the chart."
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 800,
+      "description": "The width of the chart canvas in pixels."
+    },
+    "height": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 600,
+      "description": "The height of the chart canvas in pixels."
+    },
+    "dataValues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "minItems": 1,
+      "description": "An array of data objects to plot the chart (e.g., [{ 'year': '2020', 'articles': 150 }])."
+    },
+    "outputFormat": {
+      "type": "string",
+      "enum": ["png"],
+      "default": "png",
+      "description": "Specifies the output format for the chart."
+    },
+    "xField": {
+      "type": "string",
+      "description": "The field name from `dataValues` for the X-axis."
+    },
+    "yField": {
+      "type": "string",
+      "description": "The field name from `dataValues` for the Y-axis."
+    },
+    "seriesField": {
+      "type": "string",
+      "description": "The field name for creating multiple data series on the same chart."
+    },
+    "sizeField": {
+      "type": "string",
+      "description": "For bubble charts, the field name for encoding bubble size."
+    }
+  },
+  "required": ["chartType", "dataValues", "xField", "yField"],
+  "additionalProperties": false
+}
+

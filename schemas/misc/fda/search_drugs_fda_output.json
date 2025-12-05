@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drugs@FDA Output",
+  "description": "Output schema for Drugs@FDA search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching approved drug products found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "fda_approved_drugs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "application_number": {
+            "type": "string"
+          },
+          "sponsor_name": {
+            "type": "string"
+          },
+          "brand_name": {
+            "type": "string"
+          },
+          "generic_name": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "brand_name": {
+                  "type": "string"
+                },
+                "dosage_form": {
+                  "type": "string"
+                },
+                "route": {
+                  "type": "string"
+                },
+                "marketing_status": {
+                  "type": "string"
+                },
+                "active_ingredients": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "submission_type": {
+                  "type": "string"
+                },
+                "submission_status": {
+                  "type": "string"
+                },
+                "submission_status_date": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "fda_approved_drugs"],
+  "additionalProperties": false
+}
+

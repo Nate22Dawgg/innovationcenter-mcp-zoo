@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Property address"
+    },
+    "county": {
+      "type": "string",
+      "description": "County name (required for county assessor lookup)"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation (required for county assessor lookup)"
+    }
+  },
+  "required": ["address"]
+}
+

@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drug Recalls Output",
+  "description": "Output schema for FDA drug recall search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching drug recalls found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "drug_recalls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "recall_number": {
+            "type": "string"
+          },
+          "product_description": {
+            "type": "string"
+          },
+          "recalling_firm": {
+            "type": "string"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["Class I", "Class II", "Class III"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["Ongoing", "Completed", "Pending", "Terminated"]
+          },
+          "reason_for_recall": {
+            "type": "string"
+          },
+          "recall_initiation_date": {
+            "type": "string"
+          },
+          "distribution_pattern": {
+            "type": "string"
+          },
+          "product_quantity": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "voluntary_mandated": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "drug_recalls"],
+  "additionalProperties": false
+}
+

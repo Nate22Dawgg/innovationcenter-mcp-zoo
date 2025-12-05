@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Article Connections Input",
+  "description": "Input schema for finding related articles, citations, and references for a given PMID",
+  "type": "object",
+  "properties": {
+    "sourcePmid": {
+      "type": "string",
+      "pattern": "^\\d+$",
+      "description": "The PubMed Unique Identifier (PMID) of the source article for which to find connections or format citations. This PMID must be a valid number string."
+    },
+    "relationshipType": {
+      "type": "string",
+      "enum": ["pubmed_similar_articles", "pubmed_citedin", "pubmed_references", "citation_formats"],
+      "default": "pubmed_similar_articles",
+      "description": "Specifies the type of connection or action: 'pubmed_similar_articles' (finds similar articles), 'pubmed_citedin' (finds citing articles), 'pubmed_references' (finds referenced articles), or 'citation_formats' (retrieves formatted citations)."
+    },
+    "maxRelatedResults": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 5,
+      "description": "Maximum number of related articles to retrieve for relationship-based searches. Default is 5, max is 50."
+    },
+    "citationStyles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["ris", "bibtex", "apa_string", "mla_string"]
+      },
+      "default": ["ris"],
+      "description": "An array of citation styles to format the source article into when 'relationshipType' is 'citation_formats'. Supported styles: 'ris', 'bibtex', 'apa_string', 'mla_string'. Default is ['ris']."
+    }
+  },
+  "required": ["sourcePmid"],
+  "additionalProperties": false
+}
+

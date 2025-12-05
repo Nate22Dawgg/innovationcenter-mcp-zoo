@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Get Investors Output",
+  "description": "Output schema for company investors",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "investors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_filing": {
+            "type": "string",
+            "description": "Source SEC filing type"
+          },
+          "filing_date": {
+            "type": "string",
+            "description": "Filing date"
+          },
+          "accession_number": {
+            "type": "string",
+            "description": "SEC accession number"
+          },
+          "note": {
+            "type": "string",
+            "description": "Additional notes"
+          }
+        }
+      },
+      "description": "List of investor information"
+    },
+    "data_source": {
+      "type": "string",
+      "description": "Data source"
+    },
+    "limitation": {
+      "type": "string",
+      "description": "Data limitations note"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of investor entries"
+    }
+  },
+  "required": ["company_name", "investors", "count"],
+  "additionalProperties": false
+}
+

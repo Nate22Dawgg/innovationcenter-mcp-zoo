@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Search Companies Input",
+  "description": "Input schema for searching biotech companies",
+  "type": "object",
+  "properties": {
+    "therapeutic_area": {
+      "type": "string",
+      "description": "Therapeutic area (e.g., 'oncology', 'diabetes')",
+      "examples": ["oncology", "diabetes", "cardiovascular", "neurology"]
+    },
+    "stage": {
+      "type": "string",
+      "description": "Development stage (e.g., 'Phase 3', 'Phase 2')",
+      "examples": ["Phase 1", "Phase 2", "Phase 3", "Phase 4"]
+    },
+    "location": {
+      "type": "string",
+      "description": "Geographic location",
+      "examples": ["United States", "California", "Massachusetts"]
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 20,
+      "description": "Maximum number of companies to return"
+    }
+  },
+  "additionalProperties": false
+}
+

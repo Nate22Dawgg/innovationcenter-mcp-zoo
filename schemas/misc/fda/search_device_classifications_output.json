@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Device Classifications Output",
+  "description": "Output schema for FDA device classification search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching device classifications found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "device_classifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_code": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          },
+          "device_class": {
+            "type": "string",
+            "enum": ["1", "2", "3"]
+          },
+          "medical_specialty": {
+            "type": "string"
+          },
+          "medical_specialty_description": {
+            "type": "string"
+          },
+          "regulation_number": {
+            "type": "string"
+          },
+          "submission_type_id": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string"
+          },
+          "openfda": {
+            "type": "object",
+            "properties": {
+              "device_name": {
+                "type": "string"
+              },
+              "device_class": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "device_classifications"],
+  "additionalProperties": false
+}
+

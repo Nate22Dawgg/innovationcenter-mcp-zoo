@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Search Company Output",
+  "description": "Output schema for company search results",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Search query used"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of companies found"
+    },
+    "companies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "cik": {
+            "type": "string",
+            "description": "Company CIK (10-digit zero-padded)"
+          },
+          "ticker": {
+            "type": "string",
+            "description": "Ticker symbol"
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "exchange": {
+            "type": "string",
+            "description": "Stock exchange"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if search failed"
+    }
+  },
+  "additionalProperties": false
+}
+

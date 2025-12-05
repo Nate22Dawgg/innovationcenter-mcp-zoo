@@ -1,0 +1,69 @@
+{
+  "version": "0.1.0",
+  "domains": [
+    {
+      "id": "clinical",
+      "name": "Clinical",
+      "description": "Clinical trials, medical research, patient data, and healthcare research tools",
+      "subdomains": [
+        "clinical-trials",
+        "medical-research",
+        "patient-data",
+        "drug-discovery"
+      ]
+    },
+    {
+      "id": "markets",
+      "name": "Financial Markets",
+      "description": "Financial markets data, trading, economic indicators, and market analytics",
+      "subdomains": [
+        "equity",
+        "fixed-income",
+        "commodities",
+        "forex",
+        "derivatives",
+        "economic-indicators"
+      ]
+    },
+    {
+      "id": "pricing",
+      "name": "Healthcare Pricing",
+      "description": "Healthcare pricing, cost transparency, hospital rates, and insurance data",
+      "subdomains": [
+        "hospital-pricing",
+        "pharmaceutical-pricing",
+        "cost-transparency"
+      ]
+    },
+    {
+      "id": "claims",
+      "name": "Insurance Claims",
+      "description": "Insurance claims processing, EDI parsing, claim normalization, and CMS fee schedule lookups",
+      "subdomains": [
+        "edi-parsing",
+        "claim-processing",
+        "fee-schedules",
+        "cpt-hcpcs"
+      ]
+    },
+    {
+      "id": "real_estate",
+      "name": "Real Estate",
+      "description": "Real estate data, property lookup, tax records, parcel information, and market trends",
+      "subdomains": [
+        "property-lookup",
+        "tax-records",
+        "parcel-info",
+        "market-trends",
+        "sales-data"
+      ]
+    },
+    {
+      "id": "misc",
+      "name": "Miscellaneous",
+      "description": "Experimental tools, external MCP servers, and uncategorized tools",
+      "subdomains": []
+    }
+  ]
+}
+

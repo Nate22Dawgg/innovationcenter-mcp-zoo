@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Get Earnings Transcripts Output",
+  "description": "Output schema for earnings call transcripts from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "S&P Capital IQ company identifier"
+    },
+    "company_name": {
+      "type": ["string", "null"],
+      "description": "Company name"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of transcripts returned"
+    },
+    "transcripts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transcript_id": {
+            "type": "string",
+            "description": "Unique transcript identifier"
+          },
+          "call_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the earnings call (ISO 8601 format: YYYY-MM-DD)"
+          },
+          "quarter": {
+            "type": ["string", "null"],
+            "description": "Fiscal quarter (e.g., 'Q1 2024', 'Q4 2023')"
+          },
+          "fiscal_year": {
+            "type": ["integer", "null"],
+            "description": "Fiscal year"
+          },
+          "call_type": {
+            "type": ["string", "null"],
+            "description": "Type of call (e.g., 'Earnings', 'Investor Day', 'Conference')",
+            "enum": ["Earnings", "Investor Day", "Conference", "Other"]
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Participant name"
+                },
+                "role": {
+                  "type": "string",
+                  "description": "Participant role (e.g., 'CEO', 'CFO', 'Analyst')"
+                },
+                "company": {
+                  "type": ["string", "null"],
+                  "description": "Company or firm name"
+                }
+              },
+              "required": ["name"],
+              "additionalProperties": true
+            }
+          },
+          "transcript_text": {
+            "type": ["string", "null"],
+            "description": "Full transcript text (if available)"
+          },
+          "summary": {
+            "type": ["string", "null"],
+            "description": "Transcript summary or key highlights"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Key topics discussed in the transcript"
+          },
+          "url": {
+            "type": ["string", "null"],
+            "description": "URL to full transcript (if available)"
+          }
+        },
+        "required": ["transcript_id", "call_date"],
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": ["company_id", "count", "transcripts"],
+  "additionalProperties": false
+}
+

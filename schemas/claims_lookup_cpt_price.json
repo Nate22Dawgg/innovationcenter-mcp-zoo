@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Lookup CPT Price Input",
+  "description": "Input schema for looking up CPT code prices in CMS fee schedules",
+  "type": "object",
+  "properties": {
+    "cpt_code": {
+      "type": "string",
+      "description": "CPT procedure code (5-digit, e.g., '99213')",
+      "pattern": "^[0-9]{5}$",
+      "examples": ["99213", "27447", "45378"]
+    },
+    "year": {
+      "type": "integer",
+      "description": "Year for fee schedule (default: current year)",
+      "minimum": 2000,
+      "maximum": 2100,
+      "default": 2024
+    },
+    "locality": {
+      "type": "string",
+      "description": "Locality code (default: '00' for national average)",
+      "default": "00",
+      "examples": ["00", "01", "02"]
+    }
+  },
+  "required": ["cpt_code"],
+  "additionalProperties": false
+}
+

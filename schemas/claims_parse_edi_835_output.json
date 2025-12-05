@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Parse EDI 835 Output",
+  "description": "Output schema for parsed EDI 835 Remittance Advice",
+  "type": "object",
+  "properties": {
+    "remittance_type": {
+      "type": "string",
+      "enum": ["835"],
+      "description": "Type of remittance"
+    },
+    "transaction_id": {
+      "type": "string",
+      "description": "Transaction control number"
+    },
+    "payment_date": {
+      "type": "string",
+      "description": "Payment date"
+    },
+    "payer": {
+      "type": "object",
+      "description": "Payer information",
+      "properties": {
+        "entity_type": {"type": "string"},
+        "name": {"type": "string"},
+        "id": {"type": "string"}
+      }
+    },
+    "payee": {
+      "type": "object",
+      "description": "Payee information",
+      "properties": {
+        "entity_type": {"type": "string"},
+        "name": {"type": "string"},
+        "npi": {"type": "string"}
+      }
+    },
+    "claims": {
+      "type": "array",
+      "description": "Claim payment information",
+      "items": {
+        "type": "object",
+        "properties": {
+          "claim_number": {"type": "string"},
+          "claim_status": {"type": "string"},
+          "charge_amount": {"type": "number"},
+          "paid_amount": {"type": "number"},
+          "patient_responsibility": {"type": "number"},
+          "claim_filing_indicator": {"type": "string"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Summary information",
+      "properties": {
+        "total_claims": {"type": "integer"},
+        "transaction_control_number": {"type": "string"},
+        "total_payment_amount": {"type": "number"}
+      }
+    },
+    "raw_segment_count": {
+      "type": "integer",
+      "description": "Number of X12 segments parsed"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if parsing failed"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "error"],
+      "description": "Status of the operation"
+    }
+  },
+  "additionalProperties": true
+}
+

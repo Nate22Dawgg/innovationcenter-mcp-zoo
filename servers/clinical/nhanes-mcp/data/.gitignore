@@ -1,0 +1,13 @@
+# Ignore large NHANES data files
+*.xpt
+*.XPT
+*.db
+*.sqlite
+*.sqlite3
+*.parquet
+*.csv
+*.zip
+
+# Keep directory structure
+!.gitkeep
+

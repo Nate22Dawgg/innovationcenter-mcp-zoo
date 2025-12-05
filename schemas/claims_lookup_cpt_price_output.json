@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Lookup CPT Price Output",
+  "description": "Output schema for CPT code price lookup from CMS fee schedules",
+  "type": "object",
+  "properties": {
+    "cpt_code": {
+      "type": "string",
+      "description": "CPT procedure code"
+    },
+    "year": {
+      "type": "integer",
+      "description": "Year for fee schedule"
+    },
+    "locality": {
+      "type": "string",
+      "description": "Locality code"
+    },
+    "facility_price": {
+      "type": "number",
+      "description": "Facility price (in dollars)"
+    },
+    "non_facility_price": {
+      "type": "number",
+      "description": "Non-facility price (in dollars)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Procedure description"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["found", "not_found", "error"],
+      "description": "Status of the lookup"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if lookup failed"
+    },
+    "message": {
+      "type": "string",
+      "description": "Informational message"
+    }
+  },
+  "required": ["cpt_code", "status"],
+  "additionalProperties": true
+}
+

@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES Get Demographics Summary Output",
+  "description": "Output schema for demographics summary statistics",
+  "type": "object",
+  "properties": {
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle"
+    },
+    "total_records": {
+      "type": "integer",
+      "description": "Total number of records"
+    },
+    "age_distribution": {
+      "type": "object",
+      "description": "Age distribution statistics",
+      "properties": {
+        "mean": {"type": "number"},
+        "median": {"type": "number"},
+        "min": {"type": "integer"},
+        "max": {"type": "integer"},
+        "std": {"type": "number"}
+      }
+    },
+    "gender_distribution": {
+      "type": "object",
+      "description": "Gender distribution (1=Male, 2=Female)",
+      "properties": {
+        "1": {"type": "integer"},
+        "2": {"type": "integer"}
+      }
+    },
+    "race_ethnicity_distribution": {
+      "type": "object",
+      "description": "Race/ethnicity distribution",
+      "additionalProperties": {"type": "integer"}
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if operation failed"
+    }
+  }
+}
+

@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Search Company Input",
+  "description": "Input schema for searching companies by name or ticker",
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "Company name or ticker symbol (e.g., 'Apple', 'AAPL')",
+      "examples": ["Apple", "AAPL", "Microsoft", "MSFT"]
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 20,
+      "description": "Maximum number of results to return"
+    }
+  },
+  "required": ["query"],
+  "additionalProperties": false
+}
+

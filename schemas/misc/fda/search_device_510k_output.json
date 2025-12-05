@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Device 510(k) Output",
+  "description": "Output schema for FDA 510(k) device clearance search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching 510(k) clearances found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "device_510k_clearances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "k_number": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          },
+          "applicant": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "product_code": {
+            "type": "string"
+          },
+          "clearance_type": {
+            "type": "string"
+          },
+          "regulation_number": {
+            "type": "string"
+          },
+          "decision_date": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "statement_or_summary": {
+            "type": "string"
+          },
+          "openfda": {
+            "type": "object",
+            "properties": {
+              "device_name": {
+                "type": "string"
+              },
+              "device_class": {
+                "type": "string"
+              },
+              "regulation_number": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "device_510k_clearances"],
+  "additionalProperties": false
+}
+

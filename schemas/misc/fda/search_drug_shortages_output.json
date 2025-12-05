@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drug Shortages Output",
+  "description": "Output schema for FDA drug shortage search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching drug shortages found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "drug_shortages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "generic_name": {
+            "type": "string"
+          },
+          "brand_name": {
+            "type": "string"
+          },
+          "dosage_form": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "shortage_status": {
+            "type": "string",
+            "enum": ["Currently in Shortage", "Resolved", "Discontinued", "Available"]
+          },
+          "shortage_designation": {
+            "type": "string",
+            "enum": ["Yes", "No"]
+          },
+          "estimated_resupply_date": {
+            "type": "string"
+          },
+          "created_date": {
+            "type": "string"
+          },
+          "last_updated_date": {
+            "type": "string"
+          },
+          "active_ingredients": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "drug_shortages"],
+  "additionalProperties": false
+}
+

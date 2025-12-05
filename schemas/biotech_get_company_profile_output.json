@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Get Company Profile Output",
+  "description": "Output schema for unified company profile",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "normalized_name": {
+      "type": "string",
+      "description": "Normalized company name"
+    },
+    "cik": {
+      "type": ["string", "null"],
+      "description": "SEC CIK (Central Index Key) if available"
+    },
+    "pipeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "drug_name": {
+            "type": "string"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "latest_phase": {
+            "type": "string"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "trial_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "description": "List of pipeline drugs"
+    },
+    "trials": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "List of clinical trials"
+    },
+    "filings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "List of SEC filings"
+    },
+    "publications": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "List of PubMed publications"
+    },
+    "investors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "List of investors (limited with free sources)"
+    },
+    "ipo_info": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "IPO filing information"
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "total_trials": {
+          "type": "integer"
+        },
+        "pipeline_drugs": {
+          "type": "integer"
+        },
+        "total_filings": {
+          "type": "integer"
+        },
+        "total_publications": {
+          "type": "integer"
+        },
+        "has_ipo_info": {
+          "type": "boolean"
+        },
+        "has_investor_info": {
+          "type": "boolean"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "properties": {
+        "clinical_trials": {
+          "type": "object"
+        },
+        "sec_edgar": {
+          "type": "object"
+        },
+        "pubmed": {
+          "type": "object"
+        }
+      }
+    },
+    "data_quality": {
+      "type": "object",
+      "properties": {
+        "clinical_trials": {
+          "type": "string"
+        },
+        "sec_edgar": {
+          "type": "string"
+        },
+        "pubmed": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": ["company_name", "normalized_name", "pipeline", "trials", "summary"],
+  "additionalProperties": false
+}
+

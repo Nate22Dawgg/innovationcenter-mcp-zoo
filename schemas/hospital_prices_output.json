@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hospital Prices Output",
+  "description": "Output schema for hospital pricing search results",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of pricing records returned"
+    },
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching records available"
+    },
+    "prices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hospital_id": {
+            "type": "string",
+            "description": "Unique identifier for the hospital"
+          },
+          "hospital_name": {
+            "type": "string",
+            "description": "Name of the hospital"
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": {
+                "type": "string",
+                "description": "Street address"
+              },
+              "city": {
+                "type": "string",
+                "description": "City"
+              },
+              "state": {
+                "type": "string",
+                "description": "State code"
+              },
+              "zip_code": {
+                "type": "string",
+                "description": "ZIP code"
+              }
+            },
+            "required": ["city", "state"],
+            "additionalProperties": false
+          },
+          "procedure_code": {
+            "type": "string",
+            "description": "Procedure code (CPT, DRG, etc.)"
+          },
+          "procedure_description": {
+            "type": "string",
+            "description": "Description of the procedure"
+          },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "cash_price": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "description": "Cash/self-pay price in USD"
+              },
+              "insurance_price": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "description": "Insurance negotiated price in USD"
+              },
+              "medicare_price": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "description": "Medicare reimbursement price in USD"
+              }
+            },
+            "additionalProperties": false
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 2010,
+            "description": "Year of the pricing data"
+          },
+          "data_source": {
+            "type": "string",
+            "description": "Source of the pricing data"
+          }
+        },
+        "required": ["hospital_name", "procedure_code", "pricing"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["count", "prices"],
+  "additionalProperties": false
+}
+

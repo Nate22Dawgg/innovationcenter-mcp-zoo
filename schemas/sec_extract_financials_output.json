@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Extract Financials Output",
+  "description": "Output schema for extracted financial data",
+  "type": "object",
+  "properties": {
+    "cik": {
+      "type": "string",
+      "description": "Company CIK"
+    },
+    "accession_number": {
+      "type": "string",
+      "description": "Filing accession number"
+    },
+    "financial_data": {
+      "type": "object",
+      "description": "Extracted financial data",
+      "properties": {
+        "revenue": {
+          "type": ["number", "null"],
+          "description": "Revenue"
+        },
+        "net_income": {
+          "type": ["number", "null"],
+          "description": "Net income"
+        },
+        "total_assets": {
+          "type": ["number", "null"],
+          "description": "Total assets"
+        },
+        "total_liabilities": {
+          "type": ["number", "null"],
+          "description": "Total liabilities"
+        },
+        "cash": {
+          "type": ["number", "null"],
+          "description": "Cash and cash equivalents"
+        },
+        "ebitda": {
+          "type": ["number", "null"],
+          "description": "EBITDA"
+        },
+        "operating_income": {
+          "type": ["number", "null"],
+          "description": "Operating income"
+        },
+        "diluted_earnings_per_share": {
+          "type": ["number", "null"],
+          "description": "Diluted earnings per share"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if extraction failed"
+        }
+      },
+      "additionalProperties": false
+    },
+    "extraction_method": {
+      "type": "string",
+      "description": "Method used for extraction",
+      "examples": ["pattern_matching"]
+    },
+    "note": {
+      "type": "string",
+      "description": "Note about extraction method"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if request failed"
+    }
+  },
+  "additionalProperties": false
+}
+

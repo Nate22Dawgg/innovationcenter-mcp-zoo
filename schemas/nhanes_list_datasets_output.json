@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES List Datasets Output",
+  "description": "Output schema for listing available NHANES datasets",
+  "type": "object",
+  "properties": {
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle"
+    },
+    "datasets": {
+      "type": "array",
+      "description": "List of available datasets",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "file_prefix": {"type": "string"},
+          "data_type": {"type": "string"},
+          "description": {"type": "string"},
+          "key_variables": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "count": {
+      "type": "integer",
+      "description": "Number of datasets"
+    },
+    "cycles": {
+      "type": "object",
+      "description": "Datasets organized by cycle (when cycle not specified)",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "datasets": {"type": "array"},
+          "count": {"type": "integer"}
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if operation failed"
+    }
+  }
+}
+

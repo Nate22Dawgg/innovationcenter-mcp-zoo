@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drug Labels Output",
+  "description": "Output schema for FDA drug label search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching drug labels found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "drug_labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "set_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "brand_name": {
+            "type": "string"
+          },
+          "generic_name": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "product_type": {
+            "type": "string"
+          },
+          "active_ingredients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "indications_and_usage": {
+            "type": "string"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dosage_and_administration": {
+            "type": "string"
+          },
+          "contraindications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "drug_labels"],
+  "additionalProperties": false
+}
+

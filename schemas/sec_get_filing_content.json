@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Get Filing Content Input",
+  "description": "Input schema for getting filing content",
+  "type": "object",
+  "properties": {
+    "cik": {
+      "type": "string",
+      "description": "Company CIK (10-digit zero-padded)",
+      "pattern": "^\\d{10}$",
+      "examples": ["0000320193"]
+    },
+    "accession_number": {
+      "type": "string",
+      "description": "Filing accession number (e.g., '0001234567-24-000001')",
+      "pattern": "^\\d{10}-\\d{2}-\\d{6}$",
+      "examples": ["0000320193-24-000001"]
+    },
+    "extract_financials": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to extract financial data from filing"
+    }
+  },
+  "required": ["cik", "accession_number"],
+  "additionalProperties": false
+}
+

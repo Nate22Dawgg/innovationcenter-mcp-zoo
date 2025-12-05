@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Markets Get Time Series Input",
+  "description": "Input schema for retrieving financial markets time series data for biotech stocks",
+  "type": "object",
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "description": "Financial instrument symbol (ticker) for biotech stocks",
+      "pattern": "^[A-Z0-9.-]+$",
+      "examples": ["MRNA", "BNTX", "GILD", "REGN", "VRTX", "BIIB", "AMGN"]
+    },
+    "interval": {
+      "type": "string",
+      "enum": ["daily", "weekly", "monthly"],
+      "default": "daily",
+      "description": "Data interval/period: daily, weekly, or monthly"
+    },
+    "period": {
+      "type": "string",
+      "enum": ["1m", "3m", "6m", "1y", "5y"],
+      "default": "1y",
+      "description": "Time period: 1m (1 month), 3m (3 months), 6m (6 months), 1y (1 year), 5y (5 years)"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional start date for time series (ISO 8601 format: YYYY-MM-DD). If provided, overrides period parameter."
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional end date for time series (ISO 8601 format: YYYY-MM-DD). Defaults to today if not provided."
+    }
+  },
+  "required": ["symbol"],
+  "additionalProperties": false
+}
+

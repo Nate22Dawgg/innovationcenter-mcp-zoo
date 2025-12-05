@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Get Fundamentals Input",
+  "description": "Input schema for retrieving company fundamentals from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "S&P Capital IQ company identifier (CIQ ID)",
+      "examples": ["CIQ0000000000000000"]
+    },
+    "period_type": {
+      "type": "string",
+      "enum": ["Annual", "Quarterly"],
+      "default": "Annual",
+      "description": "Period type for financial data"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date for data range (ISO 8601 format: YYYY-MM-DD)",
+      "examples": ["2020-01-01"]
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date for data range (ISO 8601 format: YYYY-MM-DD)",
+      "examples": ["2024-12-31"]
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "List of specific financial metrics to retrieve (if empty, returns all available). Examples: Revenue, NetIncome, EBITDA, TotalAssets, ROE, ROA"
+    }
+  },
+  "required": ["company_id"],
+  "additionalProperties": false
+}
+

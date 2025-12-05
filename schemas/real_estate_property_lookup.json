@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Full property address (e.g., '123 Main St, New York, NY 10001')"
+    },
+    "county": {
+      "type": "string",
+      "description": "County name (optional, helps with routing)"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation (optional, helps with routing)"
+    }
+  },
+  "required": ["address"]
+}
+

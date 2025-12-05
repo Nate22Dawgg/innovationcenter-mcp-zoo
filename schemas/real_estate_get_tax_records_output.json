@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Property address"
+    },
+    "county": {
+      "type": "string",
+      "description": "County name"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation"
+    },
+    "source": {
+      "type": "string",
+      "description": "Data source used (county_assessor or batchdata)",
+      "enum": ["county_assessor", "batchdata"]
+    },
+    "tax_records": {
+      "type": "object",
+      "description": "Tax records data",
+      "properties": {
+        "assessed_value": {
+          "type": "number",
+          "description": "Assessed property value"
+        },
+        "tax_amount": {
+          "type": "number",
+          "description": "Annual tax amount"
+        },
+        "tax_year": {
+          "type": "integer",
+          "description": "Tax year"
+        }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "description": "Property assessment data"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if lookup failed"
+    }
+  }
+}
+

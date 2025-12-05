@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES Calculate Percentile Input",
+  "description": "Input schema for calculating percentile rank",
+  "type": "object",
+  "required": ["variable", "value", "dataset", "cycle"],
+  "properties": {
+    "variable": {
+      "type": "string",
+      "description": "Variable name (e.g., 'BMXBMI', 'BPXSY1')",
+      "examples": ["BMXBMI", "BPXSY1", "BMXWT", "RIDAGEYR"]
+    },
+    "value": {
+      "type": "number",
+      "description": "Value to calculate percentile for",
+      "examples": [25.0, 120.0, 70.5]
+    },
+    "dataset": {
+      "type": "string",
+      "description": "Dataset ID",
+      "examples": ["body_measures", "blood_pressure", "demographics"]
+    },
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle",
+      "examples": ["2017-2018", "2019-2020", "2021-2022"]
+    },
+    "filters": {
+      "type": "object",
+      "description": "Optional filters to apply (e.g., filter by gender, age range)",
+      "examples": [
+        {"RIAGENDR": 1},
+        {"RIDAGEYR": {"min": 18, "max": 65}}
+      ],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+

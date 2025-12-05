@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Parse EDI 837 Output",
+  "description": "Output schema for parsed EDI 837 Professional Claim",
+  "type": "object",
+  "properties": {
+    "claim_type": {
+      "type": "string",
+      "enum": ["837"],
+      "description": "Type of claim"
+    },
+    "transaction_id": {
+      "type": "string",
+      "description": "Transaction control number"
+    },
+    "submission_date": {
+      "type": "string",
+      "description": "Claim submission date"
+    },
+    "payer": {
+      "type": "object",
+      "description": "Payer information",
+      "properties": {
+        "entity_type": {"type": "string"},
+        "name": {"type": "string"},
+        "id": {"type": "string"}
+      }
+    },
+    "provider": {
+      "type": "object",
+      "description": "Provider information",
+      "properties": {
+        "entity_type": {"type": "string"},
+        "name": {"type": "string"},
+        "npi": {"type": "string"},
+        "tax_id": {"type": "string"}
+      }
+    },
+    "patient": {
+      "type": "object",
+      "description": "Patient information",
+      "properties": {
+        "entity_type": {"type": "string"},
+        "last_name": {"type": "string"},
+        "first_name": {"type": "string"},
+        "member_id": {"type": "string"}
+      }
+    },
+    "claim": {
+      "type": "object",
+      "description": "Claim information",
+      "properties": {
+        "claim_number": {"type": "string"},
+        "charge_amount": {"type": "number"},
+        "place_of_service": {"type": "string"},
+        "diagnosis_codes": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "line_items": {
+      "type": "array",
+      "description": "Claim line items",
+      "items": {
+        "type": "object"
+      }
+    },
+    "cpt_codes": {
+      "type": "array",
+      "description": "Extracted CPT codes",
+      "items": {"type": "string"}
+    },
+    "hcpcs_codes": {
+      "type": "array",
+      "description": "Extracted HCPCS codes",
+      "items": {"type": "string"}
+    },
+    "raw_segment_count": {
+      "type": "integer",
+      "description": "Number of X12 segments parsed"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if parsing failed"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "error"],
+      "description": "Status of the operation"
+    }
+  },
+  "additionalProperties": true
+}
+

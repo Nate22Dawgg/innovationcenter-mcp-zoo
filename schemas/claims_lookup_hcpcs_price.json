@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Lookup HCPCS Price Input",
+  "description": "Input schema for looking up HCPCS code prices in CMS fee schedules",
+  "type": "object",
+  "properties": {
+    "hcpcs_code": {
+      "type": "string",
+      "description": "HCPCS procedure code (5-character alphanumeric, e.g., 'A0425')",
+      "pattern": "^[A-Z][0-9A-Z]{4}$",
+      "examples": ["A0425", "J0120", "E0100"]
+    },
+    "year": {
+      "type": "integer",
+      "description": "Year for fee schedule (default: current year)",
+      "minimum": 2000,
+      "maximum": 2100,
+      "default": 2024
+    }
+  },
+  "required": ["hcpcs_code"],
+  "additionalProperties": false
+}
+

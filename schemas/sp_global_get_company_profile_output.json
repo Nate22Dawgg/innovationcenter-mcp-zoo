@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Get Company Profile Output",
+  "description": "Output schema for comprehensive company profile from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "S&P Capital IQ company identifier"
+    },
+    "company_name": {
+      "type": ["string", "null"],
+      "description": "Company legal name"
+    },
+    "ticker": {
+      "type": ["string", "null"],
+      "description": "Primary ticker symbol"
+    },
+    "exchange": {
+      "type": ["string", "null"],
+      "description": "Primary stock exchange"
+    },
+    "country": {
+      "type": ["string", "null"],
+      "description": "Country code (ISO 3166-1 alpha-2)"
+    },
+    "headquarters": {
+      "type": ["string", "null"],
+      "description": "Headquarters location"
+    },
+    "sector": {
+      "type": ["string", "null"],
+      "description": "Industry sector"
+    },
+    "industry": {
+      "type": ["string", "null"],
+      "description": "Industry classification"
+    },
+    "sub_industry": {
+      "type": ["string", "null"],
+      "description": "Sub-industry classification"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "description": "Company description or business overview"
+    },
+    "founded_year": {
+      "type": ["integer", "null"],
+      "description": "Year company was founded"
+    },
+    "website": {
+      "type": ["string", "null"],
+      "description": "Company website URL"
+    },
+    "market_cap": {
+      "type": ["number", "null"],
+      "description": "Current market capitalization"
+    },
+    "employees": {
+      "type": ["integer", "null"],
+      "description": "Number of employees"
+    },
+    "executives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Executive name"
+          },
+          "title": {
+            "type": "string",
+            "description": "Job title"
+          },
+          "start_date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Start date in role"
+          }
+        },
+        "required": ["name", "title"],
+        "additionalProperties": true
+      },
+      "description": "List of key executives"
+    },
+    "ownership": {
+      "type": "object",
+      "properties": {
+        "institutional_holders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Institutional holder name"
+              },
+              "shares_held": {
+                "type": ["number", "null"],
+                "description": "Number of shares held"
+              },
+              "percent_ownership": {
+                "type": ["number", "null"],
+                "description": "Percentage ownership"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": true
+          }
+        },
+        "insider_holders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Insider name"
+              },
+              "title": {
+                "type": ["string", "null"],
+                "description": "Job title"
+              },
+              "shares_held": {
+                "type": ["number", "null"],
+                "description": "Number of shares held"
+              }
+            },
+            "required": ["name"],
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true,
+      "description": "Ownership information"
+    },
+    "recent_filings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "filing_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Filing date"
+          },
+          "form_type": {
+            "type": "string",
+            "description": "SEC form type (e.g., '10-K', '10-Q', '8-K')"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Filing description"
+          }
+        },
+        "required": ["filing_date", "form_type"],
+        "additionalProperties": true
+      },
+      "description": "Recent SEC filings"
+    }
+  },
+  "required": ["company_id"],
+  "additionalProperties": false
+}
+

@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Device Adverse Events Output",
+  "description": "Output schema for FDA device adverse event search results",
+  "type": "object",
+  "properties": {
+    "search_criteria": {
+      "type": "object",
+      "description": "The search criteria used for this query"
+    },
+    "total_results": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching device adverse events found"
+    },
+    "results_shown": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of results returned in this response"
+    },
+    "device_adverse_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "report_number": {
+            "type": "string"
+          },
+          "event_type": {
+            "type": "string"
+          },
+          "date_received": {
+            "type": "string"
+          },
+          "device": {
+            "type": "object",
+            "properties": {
+              "brand_name": {
+                "type": "string"
+              },
+              "generic_name": {
+                "type": "string"
+              },
+              "manufacturer_d_name": {
+                "type": "string"
+              },
+              "model_number": {
+                "type": "string"
+              },
+              "catalog_number": {
+                "type": "string"
+              },
+              "device_class": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "patient": {
+            "type": "object",
+            "properties": {
+              "age": {
+                "type": ["string", "number"]
+              },
+              "sex": {
+                "type": "string",
+                "enum": ["F", "M"]
+              },
+              "age_unit": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "event_description": {
+            "type": "string"
+          },
+          "manufacturer_narrative": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "description": "API usage information"
+    }
+  },
+  "required": ["search_criteria", "total_results", "results_shown", "device_adverse_events"],
+  "additionalProperties": false
+}
+

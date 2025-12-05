@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Fetch Contents Output",
+  "description": "Output schema for PubMed article content retrieval",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "description": "The article content in the requested format (JSON string for json format, raw text for raw_text format)"
+    },
+    "articlesReturned": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of articles returned in the response"
+    },
+    "eFetchUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the EFetch API call made"
+    }
+  },
+  "required": ["content", "articlesReturned", "eFetchUrl"],
+  "additionalProperties": false
+}
+

@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES Get Data Input",
+  "description": "Input schema for querying NHANES data",
+  "type": "object",
+  "required": ["dataset", "cycle"],
+  "properties": {
+    "dataset": {
+      "type": "string",
+      "description": "Dataset ID (e.g., 'demographics', 'body_measures', 'blood_pressure')",
+      "examples": ["demographics", "body_measures", "blood_pressure", "diabetes"]
+    },
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle (e.g., '2017-2018', '2019-2020', '2021-2022')",
+      "examples": ["2017-2018", "2019-2020", "2021-2022"]
+    },
+    "filters": {
+      "type": "object",
+      "description": "Optional filter dictionary. Supports min/max ranges, equals, and in operators.",
+      "examples": [
+        {"RIDAGEYR": {"min": 18, "max": 65}},
+        {"RIAGENDR": 1},
+        {"RIDRETH3": {"in": [1, 2, 3]}}
+      ],
+      "additionalProperties": true
+    },
+    "variables": {
+      "type": "array",
+      "description": "Optional list of variables to select. If not provided, all variables are returned.",
+      "items": {
+        "type": "string"
+      },
+      "examples": [["RIDAGEYR", "RIAGENDR", "BMXBMI"]]
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Maximum number of rows to return",
+      "minimum": 1,
+      "maximum": 10000,
+      "default": 100
+    }
+  },
+  "additionalProperties": false
+}
+

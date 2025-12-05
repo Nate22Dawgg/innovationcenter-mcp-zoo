@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hospital Prices Get Rates Input",
+  "description": "Input schema for retrieving hospital rate sheets",
+  "type": "object",
+  "properties": {
+    "hospital_id": {
+      "type": "string",
+      "description": "Turquoise Health hospital identifier"
+    },
+    "cpt_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional list of CPT codes to filter rates",
+      "minItems": 1
+    }
+  },
+  "required": ["hospital_id"],
+  "additionalProperties": false
+}
+

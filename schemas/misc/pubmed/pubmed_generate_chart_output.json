@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Generate Chart Output",
+  "description": "Output schema for generated chart images",
+  "type": "object",
+  "properties": {
+    "base64Data": {
+      "type": "string",
+      "description": "Base64-encoded PNG image data of the generated chart"
+    },
+    "chartType": {
+      "type": "string",
+      "enum": ["bar", "line", "scatter", "pie", "doughnut", "bubble", "radar", "polarArea"],
+      "description": "The type of chart that was generated"
+    },
+    "dataPoints": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of data points used to generate the chart"
+    }
+  },
+  "required": ["base64Data", "chartType", "dataPoints"],
+  "additionalProperties": false
+}
+

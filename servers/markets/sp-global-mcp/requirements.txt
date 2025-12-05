@@ -1,0 +1,11 @@
+# S&P Global MCP Server Dependencies
+
+# Core dependencies
+requests>=2.31.0
+
+# MCP SDK (optional - server works without it in CLI mode)
+mcp>=0.1.0
+
+# Note: Enterprise license required for S&P Global Market Intelligence API access
+# Contact S&P Global Market Intelligence for API documentation and credentials
+

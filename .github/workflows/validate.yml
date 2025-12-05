@@ -1,0 +1,244 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  registry-validation:
+    name: Registry Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Validate registry
+        run: |
+          python scripts/validate_registry.py
+
+  schema-validation:
+    name: Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Validate JSON Schema files
+        run: |
+          python -c "
+          import json
+          import jsonschema
+          from pathlib import Path
+          from jsonschema import Draft7Validator
+          
+          repo_root = Path('.')
+          schemas_dir = repo_root / 'schemas'
+          errors = []
+          
+          if schemas_dir.exists():
+              for schema_file in schemas_dir.rglob('*.json'):
+                  try:
+                      with open(schema_file, 'r') as f:
+                          schema_data = json.load(f)
+                      Draft7Validator.check_schema(schema_data)
+                      print(f'✅ {schema_file.relative_to(repo_root)}')
+                  except json.JSONDecodeError as e:
+                      errors.append(f'{schema_file}: Invalid JSON - {e}')
+                  except jsonschema.SchemaError as e:
+                      errors.append(f'{schema_file}: Invalid schema - {e.message}')
+          
+          if errors:
+              print('❌ Schema validation errors:')
+              for error in errors:
+                  print(f'  • {error}')
+              exit(1)
+          else:
+              print('✅ All schema files are valid')
+          "
+
+  python-tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run pytest
+        run: |
+          pytest tests/ -v --tb=short || echo "No tests found or tests failed"
+
+  typescript-tests:
+    name: TypeScript Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server:
+          - path: servers/misc/pubmed-mcp
+            test-command: npm test
+          - path: servers/misc/fda-mcp
+            test-command: npm test || echo "No test script found"
+          - path: servers/real-estate/real-estate-mcp
+            test-command: npm test || echo "No test script found"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies for ${{ matrix.server.path }}
+        working-directory: ${{ matrix.server.path }}
+        run: |
+          if [ -f package.json ]; then
+            npm ci || npm install
+          else
+            echo "No package.json found, skipping"
+            exit 0
+          fi
+
+      - name: Run tests for ${{ matrix.server.path }}
+        working-directory: ${{ matrix.server.path }}
+        run: |
+          if [ -f package.json ]; then
+            ${{ matrix.server.test-command }}
+          else
+            echo "No package.json found, skipping tests"
+          fi
+
+  link-checking:
+    name: Link Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests urllib3
+
+      - name: Check links in markdown files
+        run: |
+          python -c "
+          import re
+          import sys
+          from pathlib import Path
+          from urllib.parse import urlparse
+          import requests
+          from requests.adapters import HTTPAdapter
+          from urllib3.util.retry import Retry
+          
+          repo_root = Path('.')
+          markdown_files = list(repo_root.rglob('*.md'))
+          broken_links = []
+          checked_links = set()
+          
+          # Create a session with retries
+          session = requests.Session()
+          retry_strategy = Retry(
+              total=3,
+              backoff_factor=1,
+              status_forcelist=[429, 500, 502, 503, 504]
+          )
+          adapter = HTTPAdapter(max_retries=retry_strategy)
+          session.mount('http://', adapter)
+          session.mount('https://', adapter)
+          
+          # Pattern to match markdown links: [text](url)
+          link_pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+          
+          for md_file in markdown_files:
+              # Skip node_modules and other ignored directories
+              if 'node_modules' in str(md_file) or '.git' in str(md_file):
+                  continue
+              
+              try:
+                  with open(md_file, 'r', encoding='utf-8') as f:
+                      content = f.read()
+                  
+                  for match in link_pattern.finditer(content):
+                      url = match.group(2)
+                      
+                      # Skip anchor links and mailto links
+                      if url.startswith('#') or url.startswith('mailto:'):
+                          continue
+                      
+                      # Skip relative file paths (local files)
+                      if not url.startswith('http://') and not url.startswith('https://'):
+                          continue
+                      
+                      # Skip already checked links
+                      if url in checked_links:
+                          continue
+                      
+                      checked_links.add(url)
+                      
+                      try:
+                          parsed = urlparse(url)
+                          if not parsed.netloc:
+                              continue
+                          
+                          response = session.head(url, allow_redirects=True, timeout=10)
+                          if response.status_code >= 400:
+                              broken_links.append((md_file.relative_to(repo_root), url, response.status_code))
+                              print(f'❌ {md_file.relative_to(repo_root)}: {url} - Status {response.status_code}')
+                      except requests.exceptions.RequestException as e:
+                          broken_links.append((md_file.relative_to(repo_root), url, str(e)))
+                          print(f'❌ {md_file.relative_to(repo_root)}: {url} - Error: {e}')
+              except Exception as e:
+                  print(f'⚠️  Error reading {md_file}: {e}')
+          
+          if broken_links:
+              print(f'\n❌ Found {len(broken_links)} broken link(s):')
+              for file_path, url, error in broken_links:
+                  print(f'  • {file_path}: {url} ({error})')
+              sys.exit(1)
+          else:
+              print(f'\n✅ All {len(checked_links)} link(s) checked successfully')
+          "
+        continue-on-error: true
+

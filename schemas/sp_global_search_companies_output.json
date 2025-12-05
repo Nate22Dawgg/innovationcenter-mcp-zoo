@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Search Companies Output",
+  "description": "Output schema for company search results from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of companies returned"
+    },
+    "query": {
+      "type": "string",
+      "description": "Original search query"
+    },
+    "companies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_id": {
+            "type": "string",
+            "description": "S&P Capital IQ company identifier (CIQ ID)"
+          },
+          "company_name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "ticker": {
+            "type": ["string", "null"],
+            "description": "Primary ticker symbol"
+          },
+          "exchange": {
+            "type": ["string", "null"],
+            "description": "Primary stock exchange"
+          },
+          "country": {
+            "type": ["string", "null"],
+            "description": "Country code (ISO 3166-1 alpha-2)"
+          },
+          "sector": {
+            "type": ["string", "null"],
+            "description": "Industry sector"
+          },
+          "industry": {
+            "type": ["string", "null"],
+            "description": "Industry classification"
+          },
+          "market_cap": {
+            "type": ["number", "null"],
+            "description": "Market capitalization (if available)"
+          },
+          "revenue": {
+            "type": ["number", "null"],
+            "description": "Most recent annual revenue (if available)"
+          }
+        },
+        "required": ["company_id", "company_name"],
+        "additionalProperties": true
+      }
+    },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "country": {
+          "type": ["string", "null"]
+        },
+        "sector": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["count", "query", "companies"],
+  "additionalProperties": false
+}
+

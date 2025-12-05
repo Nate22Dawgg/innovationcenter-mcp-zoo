@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Article Connections Output",
+  "description": "Output schema for PubMed article connections and citations",
+  "type": "object",
+  "properties": {
+    "sourcePmid": {
+      "type": "string",
+      "pattern": "^\\d+$",
+      "description": "The source PMID for which connections were retrieved"
+    },
+    "relationshipType": {
+      "type": "string",
+      "enum": ["pubmed_similar_articles", "pubmed_citedin", "pubmed_references", "citation_formats"],
+      "description": "The type of relationship or action requested"
+    },
+    "relatedArticles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pmid": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "linkUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": ["pmid", "linkUrl"],
+        "additionalProperties": false
+      },
+      "description": "Array of related articles (for relationship-based searches)"
+    },
+    "citations": {
+      "type": "object",
+      "properties": {
+        "ris": {
+          "type": "string"
+        },
+        "bibtex": {
+          "type": "string"
+        },
+        "apa_string": {
+          "type": "string"
+        },
+        "mla_string": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Formatted citations in requested styles (for citation_formats relationship type)"
+    },
+    "retrievedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of related articles retrieved"
+    },
+    "eUtilityUrl": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "URL of the ELink or EFetch API call made"
+    },
+    "message": {
+      "type": ["string", "null"],
+      "description": "Additional message or error information"
+    }
+  },
+  "required": ["sourcePmid", "relationshipType", "relatedArticles", "citations", "retrievedCount"],
+  "additionalProperties": false
+}
+

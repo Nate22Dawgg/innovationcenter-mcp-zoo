@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Get Filing Content Output",
+  "description": "Output schema for filing content",
+  "type": "object",
+  "properties": {
+    "cik": {
+      "type": "string",
+      "description": "Company CIK"
+    },
+    "accession_number": {
+      "type": "string",
+      "description": "Filing accession number"
+    },
+    "content_length": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Length of filing content in characters"
+    },
+    "url": {
+      "type": "string",
+      "description": "URL to filing document"
+    },
+    "content_preview": {
+      "type": "string",
+      "description": "Preview of filing content (first 5000 characters)"
+    },
+    "financial_data": {
+      "type": "object",
+      "description": "Extracted financial data (if extract_financials=true)",
+      "properties": {
+        "revenue": {
+          "type": ["number", "null"]
+        },
+        "net_income": {
+          "type": ["number", "null"]
+        },
+        "total_assets": {
+          "type": ["number", "null"]
+        },
+        "total_liabilities": {
+          "type": ["number", "null"]
+        },
+        "cash": {
+          "type": ["number", "null"]
+        },
+        "ebitda": {
+          "type": ["number", "null"]
+        },
+        "operating_income": {
+          "type": ["number", "null"]
+        },
+        "diluted_earnings_per_share": {
+          "type": ["number", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if request failed"
+    }
+  },
+  "additionalProperties": false
+}
+

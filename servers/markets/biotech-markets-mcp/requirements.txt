@@ -1,0 +1,13 @@
+# Biotech Markets MCP Server Dependencies
+
+# Core dependencies
+requests>=2.31.0
+yfinance>=0.2.32
+
+# MCP SDK (optional - server works without it in CLI mode)
+mcp>=0.1.0
+
+# Note: No API keys required for Phase 1 (free sources)
+# For Phase 2 (paid sources), add:
+# crunchbase-api>=1.0.0  # If integrating Crunchbase
+

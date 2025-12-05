@@ -1,0 +1,80 @@
+{
+  "type": "object",
+  "properties": {
+    "zip_code": {
+      "type": "string",
+      "description": "ZIP code"
+    },
+    "city": {
+      "type": "string",
+      "description": "City name"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation"
+    },
+    "status": {
+      "type": "string",
+      "description": "Status of the lookup",
+      "enum": ["success", "stub", "error"]
+    },
+    "market_trends": {
+      "type": "object",
+      "description": "Market trends data",
+      "properties": {
+        "median_sale_price": {
+          "type": "number",
+          "description": "Median sale price"
+        },
+        "price_per_square_foot": {
+          "type": "number",
+          "description": "Price per square foot"
+        },
+        "homes_sold": {
+          "type": "integer",
+          "description": "Number of homes sold"
+        },
+        "days_on_market": {
+          "type": "number",
+          "description": "Average days on market"
+        },
+        "inventory": {
+          "type": "integer",
+          "description": "Number of homes for sale"
+        },
+        "months_of_supply": {
+          "type": "number",
+          "description": "Months of supply"
+        },
+        "price_trend": {
+          "type": "string",
+          "description": "Price trend direction",
+          "enum": ["up", "down", "stable"]
+        }
+      }
+    },
+    "year_over_year": {
+      "type": "object",
+      "description": "Year-over-year changes",
+      "properties": {
+        "price_change": {
+          "type": "number",
+          "description": "Price change percentage"
+        },
+        "sales_change": {
+          "type": "number",
+          "description": "Sales change percentage"
+        },
+        "inventory_change": {
+          "type": "number",
+          "description": "Inventory change percentage"
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if lookup failed"
+    }
+  }
+}
+

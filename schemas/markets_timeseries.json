@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Markets Time Series Input",
+  "description": "Input schema for retrieving financial markets time series data",
+  "type": "object",
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "description": "Financial instrument symbol (ticker)",
+      "pattern": "^[A-Z0-9.-]+$",
+      "examples": ["AAPL", "MSFT", "SPY", "BTC-USD"]
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date for time series (ISO 8601 format: YYYY-MM-DD)"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date for time series (ISO 8601 format: YYYY-MM-DD)"
+    },
+    "interval": {
+      "type": "string",
+      "enum": ["1m", "5m", "15m", "30m", "1h", "1d", "1w", "1mo"],
+      "default": "1d",
+      "description": "Data interval/period"
+    },
+    "market": {
+      "type": "string",
+      "enum": ["stocks", "bonds", "commodities", "forex", "crypto"],
+      "description": "Market type/category"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["open", "high", "low", "close", "volume", "adj_close", "dividend", "split"]
+      },
+      "uniqueItems": true,
+      "description": "Specific fields to return (if empty, returns all available)"
+    }
+  },
+  "required": ["symbol"],
+  "additionalProperties": false
+}
+

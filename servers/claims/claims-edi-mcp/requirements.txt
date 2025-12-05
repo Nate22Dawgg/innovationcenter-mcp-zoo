@@ -1,0 +1,22 @@
+# Claims/EDI MCP Server Requirements
+
+# MCP SDK (Model Context Protocol)
+mcp>=0.1.0
+
+# HTTP client for CMS data downloads
+requests>=2.31.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# JSON schema validation
+jsonschema>=4.17.0
+
+# CSV parsing for CMS fee schedules
+pandas>=2.0.0
+
+# X12 EDI parsing - using a flexible approach
+# Note: We'll implement a basic X12 parser wrapper
+# Alternative: pip install x12-edi-parser (if available)
+# Alternative: pip install edi-835-parser edi-837-parser (if available)
+

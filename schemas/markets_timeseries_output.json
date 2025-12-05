@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Markets Time Series Output",
+  "description": "Output schema for financial markets time series data",
+  "type": "object",
+  "properties": {
+    "symbol": {
+      "type": "string",
+      "description": "Financial instrument symbol"
+    },
+    "market": {
+      "type": "string",
+      "description": "Market type/category"
+    },
+    "interval": {
+      "type": "string",
+      "description": "Data interval used"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date of returned data"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date of returned data"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of data points returned"
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of the data point (ISO 8601)"
+          },
+          "open": {
+            "type": "number",
+            "description": "Opening price"
+          },
+          "high": {
+            "type": "number",
+            "description": "Highest price"
+          },
+          "low": {
+            "type": "number",
+            "description": "Lowest price"
+          },
+          "close": {
+            "type": "number",
+            "description": "Closing price"
+          },
+          "volume": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Trading volume"
+          },
+          "adj_close": {
+            "type": "number",
+            "description": "Adjusted closing price (if available)"
+          }
+        },
+        "required": ["date", "close"],
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string",
+          "description": "Currency of prices"
+        },
+        "data_source": {
+          "type": "string",
+          "description": "Source of the data"
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the data was last updated"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["symbol", "count", "data"],
+  "additionalProperties": false
+}
+

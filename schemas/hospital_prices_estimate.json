@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Hospital Prices Estimate Input",
+  "description": "Input schema for estimating cash price ranges",
+  "type": "object",
+  "properties": {
+    "cpt_code": {
+      "type": "string",
+      "description": "CPT or HCPCS procedure code",
+      "examples": ["99213", "27447", "45378"]
+    },
+    "location": {
+      "type": "string",
+      "description": "Location string (city, state or zip code)",
+      "examples": ["New York, NY", "90210", "San Francisco, CA"]
+    },
+    "zip_code": {
+      "type": "string",
+      "pattern": "^[0-9]{5}(-[0-9]{4})?$",
+      "description": "ZIP code for location-based search"
+    },
+    "state": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "US state code (two letters)"
+    }
+  },
+  "required": ["cpt_code", "location"],
+  "additionalProperties": false
+}
+

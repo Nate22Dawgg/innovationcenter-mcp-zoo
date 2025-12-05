@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES List Datasets Input",
+  "description": "Input schema for listing available NHANES datasets",
+  "type": "object",
+  "properties": {
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle (e.g., '2017-2018', '2019-2020', '2021-2022'). If not provided, lists datasets for all cycles.",
+      "examples": ["2017-2018", "2019-2020", "2021-2022"]
+    }
+  },
+  "additionalProperties": false
+}
+

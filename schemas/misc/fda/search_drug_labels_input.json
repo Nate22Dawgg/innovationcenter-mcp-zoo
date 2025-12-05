@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FDA Search Drug Labels Input",
+  "description": "Input schema for searching FDA drug product labeling information",
+  "type": "object",
+  "properties": {
+    "brand_name": {
+      "type": "string",
+      "description": "Brand/trade name of the drug"
+    },
+    "generic_name": {
+      "type": "string",
+      "description": "Generic name of the drug"
+    },
+    "manufacturer": {
+      "type": "string",
+      "description": "Manufacturer name"
+    },
+    "active_ingredient": {
+      "type": "string",
+      "description": "Active ingredient name"
+    },
+    "indication": {
+      "type": "string",
+      "description": "Medical indication or condition"
+    },
+    "route": {
+      "type": "string",
+      "description": "Route of administration (e.g., ORAL, TOPICAL)"
+    },
+    "product_type": {
+      "type": "string",
+      "description": "Product type (e.g., HUMAN PRESCRIPTION DRUG)"
+    },
+    "count": {
+      "type": "string",
+      "description": "Field to group results by for counting"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "default": 10,
+      "description": "Maximum number of results to return (1-100)"
+    },
+    "skip": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "Number of results to skip for pagination"
+    }
+  },
+  "additionalProperties": false
+}
+

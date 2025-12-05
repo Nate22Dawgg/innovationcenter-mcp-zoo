@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Research Agent Output",
+  "description": "Output schema for structured research plan outline",
+  "type": "object",
+  "properties": {
+    "plan_title": {
+      "type": "string",
+      "description": "The title of the research plan"
+    },
+    "overall_instructions_for_research_agent": {
+      "type": "string",
+      "description": "Overall instructions for the research agent"
+    },
+    "input_summary": {
+      "type": "object",
+      "properties": {
+        "keywords_received": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "primary_goal_stated_or_inferred": {
+          "type": "string"
+        },
+        "organism_focus": {
+          "type": "string"
+        },
+        "included_detailed_prompts_for_agent": {
+          "type": "boolean"
+        }
+      },
+      "required": ["keywords_received", "primary_goal_stated_or_inferred", "included_detailed_prompts_for_agent"],
+      "additionalProperties": false
+    },
+    "phase_1_conception_and_planning": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "step_1_1_research_question_and_hypothesis": {
+          "type": "object"
+        },
+        "step_1_2_literature_review_strategy": {
+          "type": "object"
+        },
+        "step_1_3_experimental_design_and_data_acquisition": {
+          "type": "object"
+        }
+      },
+      "required": ["title"],
+      "additionalProperties": false
+    },
+    "phase_2_data_collection_and_processing": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "step_2_1_data_collection_retrieval": {
+          "type": "object"
+        },
+        "step_2_2_data_preprocessing_and_qc": {
+          "type": "object"
+        }
+      },
+      "required": ["title"],
+      "additionalProperties": false
+    },
+    "phase_3_analysis_and_interpretation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "step_3_1_data_analysis_plan": {
+          "type": "object"
+        },
+        "step_3_2_results_interpretation": {
+          "type": "object"
+        }
+      },
+      "required": ["title"],
+      "additionalProperties": false
+    },
+    "phase_4_dissemination_and_iteration": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "step_4_1_dissemination_strategy": {
+          "type": "object"
+        },
+        "step_4_2_peer_review_and_publication": {
+          "type": "object"
+        },
+        "step_4_3_further_research_and_iteration": {
+          "type": "object"
+        }
+      },
+      "required": ["title"],
+      "additionalProperties": false
+    },
+    "cross_cutting_considerations": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "object"
+        }
+      },
+      "required": ["title"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["plan_title", "input_summary", "phase_1_conception_and_planning", "phase_2_data_collection_and_processing", "phase_3_analysis_and_interpretation", "phase_4_dissemination_and_iteration", "cross_cutting_considerations"],
+  "additionalProperties": false
+}
+

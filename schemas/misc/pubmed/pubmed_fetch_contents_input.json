@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PubMed Fetch Contents Input",
+  "description": "Input schema for retrieving detailed article information using PMIDs or search history",
+  "type": "object",
+  "properties": {
+    "pmids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\d+$"
+      },
+      "maxItems": 200,
+      "description": "An array of PubMed Unique Identifiers (PMIDs) to fetch. Use this OR queryKey/webEnv. Max 200 PMIDs per call if not using history."
+    },
+    "queryKey": {
+      "type": "string",
+      "description": "Query key from ESearch history. Requires webEnv. Use this OR pmids."
+    },
+    "webEnv": {
+      "type": "string",
+      "description": "Web environment from ESearch history. Requires queryKey. Use this OR pmids."
+    },
+    "retstart": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "0-based index of the first record to retrieve. Used with queryKey/webEnv."
+    },
+    "retmax": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum number of records to retrieve. Used with queryKey/webEnv."
+    },
+    "detailLevel": {
+      "type": "string",
+      "enum": ["abstract_plus", "full_xml", "medline_text", "citation_data"],
+      "default": "abstract_plus",
+      "description": "Specifies the level of detail for the fetched content. Options: 'abstract_plus' (parsed details), 'full_xml' (raw PubMedArticle XML), 'medline_text' (MEDLINE format), 'citation_data' (minimal citation data). Defaults to 'abstract_plus'."
+    },
+    "includeMeshTerms": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include MeSH terms in 'abstract_plus' and 'citation_data' results. Default: true."
+    },
+    "includeGrantInfo": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include grant info in 'abstract_plus' results. Default: false."
+    },
+    "outputFormat": {
+      "type": "string",
+      "enum": ["json", "raw_text"],
+      "default": "json",
+      "description": "Output format. 'json' (default) wraps data in a JSON object. 'raw_text' returns raw text for 'medline_text' or 'full_xml' detail levels."
+    }
+  },
+  "anyOf": [
+    {
+      "required": ["pmids"],
+      "properties": {
+        "pmids": {
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "required": ["queryKey", "webEnv"]
+    }
+  ],
+  "additionalProperties": false
+}
+

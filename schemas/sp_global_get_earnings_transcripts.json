@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Get Earnings Transcripts Input",
+  "description": "Input schema for retrieving earnings call transcripts from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "S&P Capital IQ company identifier (CIQ ID)",
+      "examples": ["CIQ0000000000000000"]
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date for transcript search (ISO 8601 format: YYYY-MM-DD)",
+      "examples": ["2023-01-01"]
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date for transcript search (ISO 8601 format: YYYY-MM-DD)",
+      "examples": ["2024-12-31"]
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 10,
+      "description": "Maximum number of transcripts to return"
+    }
+  },
+  "required": ["company_id"],
+  "additionalProperties": false
+}
+

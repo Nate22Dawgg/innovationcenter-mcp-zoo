@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Analyze Target Exposure Output",
+  "description": "Output schema for target exposure analysis",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "description": "Target name"
+    },
+    "company_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of companies working on target"
+    },
+    "total_trials": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of trials"
+    },
+    "companies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "Company name"
+          },
+          "trial_count": {
+            "type": "integer",
+            "description": "Number of trials"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of phases"
+          },
+          "latest_phase": {
+            "type": "string",
+            "description": "Latest phase"
+          },
+          "sample_trials": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Sample trials"
+          }
+        },
+        "required": ["company_name", "trial_count"],
+        "additionalProperties": false
+      }
+    },
+    "phase_distribution": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Distribution of trials by phase"
+    },
+    "data_source": {
+      "type": "string",
+      "description": "Data source"
+    }
+  },
+  "required": ["target", "company_count", "total_trials", "companies"],
+  "additionalProperties": false
+}
+

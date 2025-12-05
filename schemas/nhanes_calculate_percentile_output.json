@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NHANES Calculate Percentile Output",
+  "description": "Output schema for percentile calculation results",
+  "type": "object",
+  "properties": {
+    "variable": {
+      "type": "string",
+      "description": "Variable name"
+    },
+    "value": {
+      "type": "number",
+      "description": "Value for which percentile was calculated"
+    },
+    "dataset": {
+      "type": "string",
+      "description": "Dataset ID"
+    },
+    "cycle": {
+      "type": "string",
+      "description": "Data cycle"
+    },
+    "percentile": {
+      "type": "number",
+      "description": "Percentile rank (0-100)"
+    },
+    "sample_size": {
+      "type": "integer",
+      "description": "Number of samples used in calculation"
+    },
+    "statistics": {
+      "type": "object",
+      "description": "Statistical summary",
+      "properties": {
+        "mean": {"type": "number"},
+        "median": {"type": "number"},
+        "std": {"type": "number"},
+        "min": {"type": "number"},
+        "max": {"type": "number"},
+        "p25": {"type": "number"},
+        "p50": {"type": "number"},
+        "p75": {"type": "number"},
+        "p90": {"type": "number"},
+        "p95": {"type": "number"},
+        "p99": {"type": "number"}
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if operation failed"
+    }
+  }
+}
+

@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "S&P Global Get Fundamentals Output",
+  "description": "Output schema for company fundamentals data from S&P Capital IQ",
+  "type": "object",
+  "properties": {
+    "company_id": {
+      "type": "string",
+      "description": "S&P Capital IQ company identifier"
+    },
+    "company_name": {
+      "type": ["string", "null"],
+      "description": "Company name"
+    },
+    "period_type": {
+      "type": "string",
+      "enum": ["Annual", "Quarterly"],
+      "description": "Period type used"
+    },
+    "start_date": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "Start date of data range"
+    },
+    "end_date": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "End date of data range"
+    },
+    "fundamentals": {
+      "type": "object",
+      "description": "Financial fundamentals data organized by period",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "description": "Period identifier (e.g., '2023-12-31' for annual, '2024-Q1' for quarterly)"
+          },
+          "revenue": {
+            "type": ["number", "null"],
+            "description": "Total revenue"
+          },
+          "net_income": {
+            "type": ["number", "null"],
+            "description": "Net income"
+          },
+          "ebitda": {
+            "type": ["number", "null"],
+            "description": "EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization)"
+          },
+          "total_assets": {
+            "type": ["number", "null"],
+            "description": "Total assets"
+          },
+          "total_liabilities": {
+            "type": ["number", "null"],
+            "description": "Total liabilities"
+          },
+          "shareholders_equity": {
+            "type": ["number", "null"],
+            "description": "Shareholders' equity"
+          },
+          "operating_cash_flow": {
+            "type": ["number", "null"],
+            "description": "Operating cash flow"
+          },
+          "free_cash_flow": {
+            "type": ["number", "null"],
+            "description": "Free cash flow"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ratios": {
+      "type": "object",
+      "description": "Financial ratios",
+      "properties": {
+        "roe": {
+          "type": ["number", "null"],
+          "description": "Return on Equity (ROE)"
+        },
+        "roa": {
+          "type": ["number", "null"],
+          "description": "Return on Assets (ROA)"
+        },
+        "debt_to_equity": {
+          "type": ["number", "null"],
+          "description": "Debt to Equity ratio"
+        },
+        "current_ratio": {
+          "type": ["number", "null"],
+          "description": "Current ratio"
+        },
+        "profit_margin": {
+          "type": ["number", "null"],
+          "description": "Profit margin"
+        }
+      },
+      "additionalProperties": true
+    },
+    "currency": {
+      "type": ["string", "null"],
+      "description": "Currency code for financial values (ISO 4217)"
+    },
+    "units": {
+      "type": ["string", "null"],
+      "description": "Units for financial values (e.g., 'millions', 'thousands')"
+    }
+  },
+  "required": ["company_id", "fundamentals"],
+  "additionalProperties": false
+}
+

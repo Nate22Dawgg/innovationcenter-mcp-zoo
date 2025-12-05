@@ -1,0 +1,52 @@
+{
+  "type": "object",
+  "properties": {
+    "zip_code": {
+      "type": "string",
+      "description": "ZIP code searched"
+    },
+    "days": {
+      "type": "integer",
+      "description": "Number of days looked back"
+    },
+    "source": {
+      "type": "string",
+      "description": "Data source used (redfin or batchdata)",
+      "enum": ["redfin", "batchdata"]
+    },
+    "recent_sales": {
+      "type": "array",
+      "description": "List of recent sales",
+      "items": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "Property address"
+          },
+          "sale_price": {
+            "type": "number",
+            "description": "Sale price"
+          },
+          "sale_date": {
+            "type": "string",
+            "description": "Sale date (ISO format)"
+          },
+          "square_feet": {
+            "type": "number",
+            "description": "Square footage"
+          }
+        }
+      }
+    },
+    "count": {
+      "type": "integer",
+      "description": "Number of sales found"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if search failed"
+    }
+  }
+}
+

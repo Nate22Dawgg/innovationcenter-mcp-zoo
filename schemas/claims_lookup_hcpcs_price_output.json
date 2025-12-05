@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Claims Lookup HCPCS Price Output",
+  "description": "Output schema for HCPCS code price lookup from CMS fee schedules",
+  "type": "object",
+  "properties": {
+    "hcpcs_code": {
+      "type": "string",
+      "description": "HCPCS procedure code"
+    },
+    "year": {
+      "type": "integer",
+      "description": "Year for fee schedule"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price (in dollars)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Procedure description"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["found", "not_found", "error"],
+      "description": "Status of the lookup"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if lookup failed"
+    },
+    "message": {
+      "type": "string",
+      "description": "Informational message"
+    }
+  },
+  "required": ["hcpcs_code", "status"],
+  "additionalProperties": true
+}
+

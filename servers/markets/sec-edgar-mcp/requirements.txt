@@ -1,0 +1,11 @@
+# SEC EDGAR MCP Server Dependencies
+
+# Core dependencies
+requests>=2.31.0
+
+# MCP SDK (optional - server works without it in CLI mode)
+mcp>=0.1.0
+
+# Note: No API keys required - uses free SEC EDGAR API
+# Rate limit: 10 requests per second (enforced in code)
+

@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Get Pipeline Drugs Output",
+  "description": "Output schema for company pipeline drugs",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "pipeline_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of drugs in pipeline"
+    },
+    "drugs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "drug_name": {
+            "type": "string",
+            "description": "Drug name"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of phases"
+          },
+          "latest_phase": {
+            "type": "string",
+            "description": "Latest phase"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Trial statuses"
+          },
+          "trial_count": {
+            "type": "integer",
+            "description": "Number of trials"
+          },
+          "nct_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sample NCT IDs"
+          }
+        },
+        "required": ["drug_name", "latest_phase", "trial_count"],
+        "additionalProperties": false
+      }
+    },
+    "data_source": {
+      "type": "string",
+      "description": "Data source"
+    }
+  },
+  "required": ["company_name", "pipeline_count", "drugs"],
+  "additionalProperties": false
+}
+

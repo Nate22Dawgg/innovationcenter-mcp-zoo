@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "zip_code": {
+      "type": "string",
+      "description": "ZIP code to search"
+    },
+    "days": {
+      "type": "integer",
+      "description": "Number of days to look back (default: 90)",
+      "default": 90,
+      "minimum": 1,
+      "maximum": 365
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Maximum number of results (default: 10)",
+      "default": 10,
+      "minimum": 1,
+      "maximum": 100
+    }
+  },
+  "required": ["zip_code"]
+}
+
