@@ -1,0 +1,173 @@
+{
+  "nyc": {
+    "name": "New York City",
+    "counties": ["New York", "Kings", "Queens", "Bronx", "Richmond"],
+    "state": "NY",
+    "assessor_api": {
+      "base_url": "https://www1.nyc.gov/site/finance/property/property-data.page",
+      "type": "web_scrape",
+      "notes": "NYC Department of Finance provides property data via web interface"
+    },
+    "gis_api": {
+      "base_url": "https://services5.arcgis.com/GfwWNkhOj9bNBqoJ/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "NYC_Parcels",
+      "notes": "NYC Open Data ArcGIS REST API"
+    },
+    "priority": 1
+  },
+  "la": {
+    "name": "Los Angeles",
+    "counties": ["Los Angeles"],
+    "state": "CA",
+    "assessor_api": {
+      "base_url": "https://portal.assessor.lacounty.gov",
+      "type": "web_scrape",
+      "notes": "LA County Assessor Portal - requires web scraping"
+    },
+    "gis_api": {
+      "base_url": "https://gis.lacounty.gov/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "LA County GIS ArcGIS REST API"
+    },
+    "priority": 2
+  },
+  "sf": {
+    "name": "San Francisco",
+    "counties": ["San Francisco"],
+    "state": "CA",
+    "assessor_api": {
+      "base_url": "https://sfassessor.org",
+      "type": "web_scrape",
+      "notes": "SF Assessor-Recorder Office"
+    },
+    "gis_api": {
+      "base_url": "https://geoservices.sfgov.org/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "SF Open Data ArcGIS REST API"
+    },
+    "priority": 3
+  },
+  "miami": {
+    "name": "Miami-Dade",
+    "counties": ["Miami-Dade"],
+    "state": "FL",
+    "assessor_api": {
+      "base_url": "https://www.miamidade.gov/pa",
+      "type": "web_scrape",
+      "notes": "Miami-Dade Property Appraiser"
+    },
+    "gis_api": {
+      "base_url": "https://gisweb.miamidade.gov/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "Miami-Dade GIS ArcGIS REST API"
+    },
+    "priority": 4
+  },
+  "dallas": {
+    "name": "Dallas",
+    "counties": ["Dallas"],
+    "state": "TX",
+    "assessor_api": {
+      "base_url": "https://www.dallascad.org",
+      "type": "web_scrape",
+      "notes": "Dallas Central Appraisal District"
+    },
+    "gis_api": {
+      "base_url": "https://gis.dallascounty.org/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "Dallas County GIS ArcGIS REST API"
+    },
+    "priority": 5
+  },
+  "chicago": {
+    "name": "Chicago",
+    "counties": ["Cook"],
+    "state": "IL",
+    "assessor_api": {
+      "base_url": "https://www.cookcountyassessor.com",
+      "type": "web_scrape",
+      "notes": "Cook County Assessor"
+    },
+    "gis_api": {
+      "base_url": "https://gis.cookcountyil.gov/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "Cook County GIS ArcGIS REST API"
+    },
+    "priority": 6
+  },
+  "houston": {
+    "name": "Houston",
+    "counties": ["Harris"],
+    "state": "TX",
+    "assessor_api": {
+      "base_url": "https://www.hcad.org",
+      "type": "web_scrape",
+      "notes": "Harris County Appraisal District"
+    },
+    "gis_api": {
+      "base_url": "https://gis.harriscountytx.gov/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "Harris County GIS ArcGIS REST API"
+    },
+    "priority": 7
+  },
+  "phoenix": {
+    "name": "Phoenix",
+    "counties": ["Maricopa"],
+    "state": "AZ",
+    "assessor_api": {
+      "base_url": "https://www.maricopa.gov/assessor",
+      "type": "web_scrape",
+      "notes": "Maricopa County Assessor"
+    },
+    "gis_api": {
+      "base_url": "https://gis.maricopa.gov/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "Maricopa County GIS ArcGIS REST API"
+    },
+    "priority": 8
+  },
+  "seattle": {
+    "name": "Seattle",
+    "counties": ["King"],
+    "state": "WA",
+    "assessor_api": {
+      "base_url": "https://info.kingcounty.gov/assessor",
+      "type": "web_scrape",
+      "notes": "King County Assessor"
+    },
+    "gis_api": {
+      "base_url": "https://gis.kingcounty.gov/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "King County GIS ArcGIS REST API"
+    },
+    "priority": 9
+  },
+  "orange_ca": {
+    "name": "Orange County, CA",
+    "counties": ["Orange"],
+    "state": "CA",
+    "assessor_api": {
+      "base_url": "https://www.ocgov.com/gov/assessor",
+      "type": "web_scrape",
+      "notes": "Orange County Assessor"
+    },
+    "gis_api": {
+      "base_url": "https://gis.ocgov.com/arcgis/rest/services",
+      "type": "arcgis",
+      "parcel_layer": "Parcels",
+      "notes": "Orange County GIS ArcGIS REST API"
+    },
+    "priority": 10
+  }
+}
+

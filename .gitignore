@@ -49,3 +49,7 @@ htmlcov/
 *.db
 cache.db
 
+
+# Ignore node_modules at any depth
+**/node_modules/
+

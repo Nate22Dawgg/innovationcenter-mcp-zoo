@@ -1,0 +1,14 @@
+# Real Estate MCP Server Requirements
+
+# MCP SDK (Model Context Protocol)
+mcp>=0.1.0
+
+# HTTP client
+requests>=2.31.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# JSON schema validation (optional, for schema validation)
+jsonschema>=4.17.0
+
