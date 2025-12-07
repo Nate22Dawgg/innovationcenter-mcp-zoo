@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "array",
+      "description": "List of property addresses or property IDs to compare",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 2,
+      "maxItems": 10
+    },
+    "county": {
+      "type": "string",
+      "description": "County name (optional, helps with routing if all properties are in same county)"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation (optional, helps with routing if all properties are in same state)"
+    }
+  },
+  "required": ["properties"]
+}

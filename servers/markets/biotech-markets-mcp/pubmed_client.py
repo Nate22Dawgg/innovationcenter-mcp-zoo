@@ -7,14 +7,23 @@ in author affiliations or abstracts.
 
 import requests
 import time
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from urllib.parse import quote
 
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.cache import get_cache, build_cache_key
 
 # PubMed E-utilities API base URL
 PUBMED_BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 ESEARCH_URL = f"{PUBMED_BASE_URL}/esearch.fcgi"
 EFETCH_URL = f"{PUBMED_BASE_URL}/efetch.fcgi"
+
+# Initialize cache
+_cache = get_cache()
 
 
 def _rate_limit():

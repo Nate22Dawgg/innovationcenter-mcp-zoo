@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Healthcare Equities Analyze Company Output",
+  "description": "Output schema for cross-domain company analysis",
+  "type": "object",
+  "properties": {
+    "identifier": {
+      "type": "object",
+      "description": "Company identifier used for the analysis",
+      "properties": {
+        "ticker": {
+          "type": ["string", "null"]
+        },
+        "company_name": {
+          "type": ["string", "null"]
+        },
+        "cik": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "financials": {
+      "type": ["object", "null"],
+      "description": "Financial and pipeline data from biotech-markets-mcp",
+      "properties": {
+        "company_name": {
+          "type": "string"
+        },
+        "normalized_name": {
+          "type": "string"
+        },
+        "pipeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "drug_name": {
+                "type": "string"
+              },
+              "phases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "latest_phase": {
+                "type": ["string", "null"]
+              },
+              "trial_count": {
+                "type": "integer"
+              },
+              "indication": {
+                "type": ["string", "null"]
+              },
+              "therapeutic_area": {
+                "type": ["string", "null"]
+              }
+            }
+          }
+        },
+        "financial_summary": {
+          "type": ["object", "null"],
+          "properties": {
+            "market_cap": {
+              "type": ["number", "null"]
+            },
+            "revenue": {
+              "type": ["number", "null"]
+            },
+            "cash_on_hand": {
+              "type": ["number", "null"]
+            },
+            "burn_rate": {
+              "type": ["number", "null"]
+            },
+            "runway_months": {
+              "type": ["integer", "null"]
+            },
+            "has_ipo": {
+              "type": "boolean"
+            },
+            "exchange": {
+              "type": ["string", "null"]
+            }
+          }
+        },
+        "trials_summary": {
+          "type": ["object", "null"],
+          "properties": {
+            "total_trials": {
+              "type": "integer"
+            },
+            "active_trials": {
+              "type": "integer"
+            },
+            "completed_trials": {
+              "type": "integer"
+            }
+          }
+        },
+        "risk_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "clinical": {
+      "type": ["object", "null"],
+      "description": "Clinical trials data",
+      "properties": {
+        "total_trials": {
+          "type": "integer"
+        },
+        "active_trials": {
+          "type": "integer"
+        },
+        "trials": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "sec": {
+      "type": ["object", "null"],
+      "description": "SEC filing and company information"
+    },
+    "risk_flags": {
+      "type": "array",
+      "description": "Aggregated risk flags across all domains",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Summary of analysis results",
+      "properties": {
+        "has_financials": {
+          "type": "boolean"
+        },
+        "has_clinical": {
+          "type": "boolean"
+        },
+        "has_sec": {
+          "type": "boolean"
+        },
+        "pipeline_drugs": {
+          "type": "integer"
+        },
+        "total_trials": {
+          "type": "integer"
+        },
+        "risk_flag_count": {
+          "type": "integer"
+        }
+      },
+      "required": ["has_financials", "has_clinical", "has_sec", "pipeline_drugs", "total_trials", "risk_flag_count"]
+    }
+  },
+  "required": ["identifier", "financials", "clinical", "sec", "risk_flags", "summary"],
+  "additionalProperties": false
+}

@@ -26,7 +26,11 @@ class BatchDataClient:
         """
         self.api_key = api_key or os.getenv("BATCHDATA_API_KEY")
         if not self.api_key:
-            raise ValueError("BATCHDATA_API_KEY environment variable is required")
+            raise ValueError(
+                "BATCHDATA_API_KEY environment variable is required. "
+                "This is a required configuration - the service will not function without it. "
+                "Please set BATCHDATA_API_KEY in your environment or configuration."
+            )
         
         self.cache = cache
         self.headers = {

@@ -44,14 +44,22 @@ _client: Optional[SPGlobalClient] = None
 
 
 def get_client() -> SPGlobalClient:
-    """Get or create S&P Global API client."""
+    """
+    Get or create S&P Global API client.
+    
+    Raises:
+        ValueError: If SP_GLOBAL_API_KEY is not set (fail-closed behavior)
+    """
     global _client
     if _client is None:
+        # Fail-closed: explicitly check for API key before creating client
         api_key = os.getenv("SP_GLOBAL_API_KEY")
         if not api_key:
             raise ValueError(
                 "SP_GLOBAL_API_KEY environment variable is required. "
-                "Please set your S&P Global Market Intelligence API key."
+                "This is a required configuration - the service will not function without it. "
+                "Please set SP_GLOBAL_API_KEY in your environment or configuration. "
+                "Contact S&P Global Market Intelligence support for API access."
             )
         _client = SPGlobalClient(api_key=api_key)
     return _client

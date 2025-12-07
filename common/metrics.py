@@ -121,6 +121,71 @@ class MetricsCollector:
         if error:
             self.increment_counter(f"api_{api_name}_errors", labels=labels)
 
+    def record_mcp_tool_call(
+        self,
+        server: str,
+        tool: str,
+        status: str,
+        duration_ms: Optional[float] = None,
+    ):
+        """
+        Record an MCP tool call with standardized metrics.
+
+        Emits:
+        - mcp_tool_calls_total{server, tool, status}
+        - mcp_tool_latency_ms{server, tool} (if duration_ms provided)
+
+        Args:
+            server: MCP server name
+            tool: Tool name
+            status: Status ("success", "error", "timeout", etc.)
+            duration_ms: Optional duration in milliseconds
+        """
+        labels = {
+            "server": server,
+            "tool": tool,
+            "status": status,
+        }
+        self.increment_counter("mcp_tool_calls_total", labels=labels)
+
+        if duration_ms is not None:
+            latency_labels = {
+                "server": server,
+                "tool": tool,
+            }
+            self.record_histogram("mcp_tool_latency_ms", duration_ms, labels=latency_labels)
+
+    def record_upstream_error(
+        self,
+        server: str,
+        tool: str,
+        upstream: str,
+        code: Optional[str] = None,
+    ):
+        """
+        Record an upstream error from an MCP tool call.
+
+        Emits:
+        - mcp_tool_upstream_errors_total{server, tool, upstream, code}
+
+        Args:
+            server: MCP server name
+            tool: Tool name
+            upstream: Upstream service name (e.g., "pubmed-api", "sec-edgar")
+            code: Optional error code (e.g., "500", "timeout", "rate_limit")
+        """
+        labels = {
+            "server": server,
+            "tool": tool,
+            "upstream": upstream,
+        }
+        if code:
+            labels["code"] = str(code)
+        else:
+            labels["code"] = "unknown"
+
+        self.increment_counter("mcp_tool_upstream_errors_total", labels=labels)
+
     def get_counter(self, name: str, labels: Optional[Dict[str, str]] = None) -> int:
         """Get counter value."""
         with self._lock:

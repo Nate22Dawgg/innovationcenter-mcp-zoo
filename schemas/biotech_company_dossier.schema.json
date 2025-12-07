@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biotech Company Dossier",
+  "description": "Comprehensive biotech company dossier with pipeline, financials, and risk assessment",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "description": "Company name"
+    },
+    "normalized_name": {
+      "type": "string",
+      "description": "Normalized company name for matching"
+    },
+    "identifiers": {
+      "type": "object",
+      "description": "Company identifiers",
+      "properties": {
+        "ticker": {
+          "type": ["string", "null"],
+          "description": "Stock ticker symbol"
+        },
+        "exchange": {
+          "type": ["string", "null"],
+          "description": "Stock exchange (e.g., 'NASDAQ', 'NYSE')",
+          "enum": ["NASDAQ", "NYSE", "AMEX", "OTC", null]
+        },
+        "cik": {
+          "type": ["string", "null"],
+          "description": "SEC CIK (Central Index Key) - 10-digit zero-padded string",
+          "pattern": "^\\d{10}$"
+        },
+        "isin": {
+          "type": ["string", "null"],
+          "description": "International Securities Identification Number"
+        },
+        "cik_formatted": {
+          "type": ["string", "null"],
+          "description": "CIK formatted as 10-digit zero-padded string (deprecated, use 'cik' instead)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "pipeline": {
+      "type": "array",
+      "description": "Drug pipeline entries with structured information",
+      "items": {
+        "type": "object",
+        "properties": {
+          "drug_name": {
+            "type": "string",
+            "description": "Name of the drug/compound"
+          },
+          "indication": {
+            "type": ["string", "null"],
+            "description": "Therapeutic indication or condition"
+          },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["Phase 1", "Phase 2", "Phase 3", "Phase 4", "Preclinical", "IND", "NDA", "Approved"]
+            },
+            "description": "List of trial phases"
+          },
+          "latest_phase": {
+            "type": ["string", "null"],
+            "description": "Most advanced phase reached"
+          },
+          "statuses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Current trial statuses"
+          },
+          "trial_count": {
+            "type": "integer",
+            "description": "Number of clinical trials for this drug",
+            "minimum": 0
+          },
+          "therapeutic_area": {
+            "type": ["string", "null"],
+            "description": "Primary therapeutic area"
+          },
+          "last_updated": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "Date when pipeline information was last updated"
+          }
+        },
+        "required": ["drug_name", "phases", "trial_count"],
+        "additionalProperties": false
+      }
+    },
+    "financial_summary": {
+      "type": "object",
+      "description": "Financial summary information",
+      "properties": {
+        "market_cap": {
+          "type": ["number", "null"],
+          "description": "Market capitalization in USD"
+        },
+        "revenue": {
+          "type": ["number", "null"],
+          "description": "Annual revenue in USD"
+        },
+        "cash_on_hand": {
+          "type": ["number", "null"],
+          "description": "Cash and cash equivalents in USD"
+        },
+        "burn_rate": {
+          "type": ["number", "null"],
+          "description": "Monthly burn rate in USD"
+        },
+        "runway_months": {
+          "type": ["integer", "null"],
+          "description": "Estimated cash runway in months"
+        },
+        "has_ipo": {
+          "type": "boolean",
+          "description": "Whether company has completed IPO"
+        },
+        "ipo_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "IPO date if applicable"
+        },
+        "exchange": {
+          "type": ["string", "null"],
+          "description": "Stock exchange (e.g., NASDAQ, NYSE)"
+        },
+        "latest_filing_date": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Date of most recent SEC filing"
+        },
+        "filing_count": {
+          "type": "integer",
+          "description": "Number of SEC filings",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "risk_flags": {
+      "type": "array",
+      "description": "Array of risk flags identified for the company",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 0
+    },
+    "publications": {
+      "type": "array",
+      "description": "Recent publications related to the company",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "journal": {
+            "type": ["string", "null"]
+          },
+          "pub_date": {
+            "type": ["string", "null"],
+            "format": "date"
+          },
+          "pmid": {
+            "type": ["string", "null"],
+            "description": "PubMed ID"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "trials_summary": {
+      "type": "object",
+      "description": "Summary of clinical trials",
+      "properties": {
+        "total_trials": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "active_trials": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completed_trials": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase_distribution": {
+          "type": "object",
+          "description": "Distribution of trials by phase",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "investors": {
+      "type": "array",
+      "description": "List of investors/backers",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": ["string", "null"],
+            "description": "Investor type (e.g., VC, PE, Strategic)"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the dossier",
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the dossier was generated"
+        },
+        "data_sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Data sources used (e.g., ClinicalTrials.gov, SEC EDGAR, PubMed)"
+        },
+        "data_quality": {
+          "type": "object",
+          "description": "Data quality indicators",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["company_name", "identifiers", "pipeline", "financial_summary", "risk_flags"],
+  "additionalProperties": false
+}

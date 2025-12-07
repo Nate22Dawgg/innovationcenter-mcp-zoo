@@ -6,13 +6,38 @@ Provides error classes and standard error response formatting.
 
 import traceback
 from enum import Enum
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, Callable
+import functools
+import requests
+
+# Try to import httpx (optional dependency for async HTTP clients)
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+    httpx = None
 
 
 class ErrorCode(str, Enum):
-    """Standard error codes for MCP servers."""
+    """Standard error codes for MCP servers.
+    
+    Simplified error codes for LLM-friendly error handling:
+    - UPSTREAM_UNAVAILABLE: API down, timeout, 5xx errors
+    - BAD_REQUEST: Invalid arguments, schema validation failures
+    - RATE_LIMITED: Rate limit exceeded (from provider or internal limiter)
+    - NOT_FOUND: Resource not found
+    - INTERNAL_ERROR: Unexpected internal errors
+    """
 
-    # API Errors
+    # Simplified error codes (primary)
+    UPSTREAM_UNAVAILABLE = "UPSTREAM_UNAVAILABLE"
+    BAD_REQUEST = "BAD_REQUEST"
+    RATE_LIMITED = "RATE_LIMITED"
+    NOT_FOUND = "NOT_FOUND"
+    INTERNAL_ERROR = "INTERNAL_ERROR"
+
+    # Legacy/Detailed error codes (for backward compatibility)
     API_ERROR = "API_ERROR"
     API_TIMEOUT = "API_TIMEOUT"
     API_RATE_LIMIT = "API_RATE_LIMIT"
@@ -23,14 +48,18 @@ class ErrorCode(str, Enum):
 
     # Validation Errors
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    BAD_REQUEST = "BAD_REQUEST"
     INVALID_INPUT = "INVALID_INPUT"
     MISSING_REQUIRED_FIELD = "MISSING_REQUIRED_FIELD"
 
     # System Errors
     CIRCUIT_BREAKER_OPEN = "CIRCUIT_BREAKER_OPEN"
     RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"
-    INTERNAL_ERROR = "INTERNAL_ERROR"
     SERVICE_UNAVAILABLE = "SERVICE_UNAVAILABLE"
+    # Service is disabled or unusable because required configuration is missing or invalid
+    # (e.g., env vars, base URLs, credentials). Used for fail-soft behavior where the server
+    # runs but specific tools are disabled with clear error messages.
+    SERVICE_NOT_CONFIGURED = "SERVICE_NOT_CONFIGURED"
 
     # Data Errors
     DATA_NOT_FOUND = "DATA_NOT_FOUND"
@@ -103,10 +132,19 @@ class ApiError(McpError):
         message: str,
         status_code: Optional[int] = None,
         response_body: Optional[str] = None,
+        use_simplified_codes: bool = True,
         **kwargs,
     ):
-        """Initialize API error."""
-        code = kwargs.pop("code", ErrorCode.API_ERROR)
+        """Initialize API error.
+        
+        Args:
+            message: Error message
+            status_code: HTTP status code
+            response_body: Response body (if available)
+            use_simplified_codes: If True, use simplified error codes (UPSTREAM_UNAVAILABLE, etc.)
+                                 If False, use detailed error codes (API_ERROR, etc.)
+            **kwargs: Additional arguments passed to McpError
+        """
         details = kwargs.get("details", {})
         if status_code:
             details["status_code"] = status_code
@@ -114,17 +152,33 @@ class ApiError(McpError):
             details["response_body"] = response_body
 
         # Map HTTP status codes to error codes
-        if status_code == 401:
-            code = ErrorCode.API_UNAUTHORIZED
-        elif status_code == 403:
-            code = ErrorCode.API_FORBIDDEN
-        elif status_code == 404:
-            code = ErrorCode.API_NOT_FOUND
-        elif status_code == 429:
-            code = ErrorCode.API_RATE_LIMIT
-            kwargs.setdefault("retry_after", 60)
-        elif status_code and status_code >= 500:
-            code = ErrorCode.API_SERVER_ERROR
+        if use_simplified_codes:
+            # Use simplified error codes for LLM-friendly error handling
+            if status_code == 404:
+                code = ErrorCode.NOT_FOUND
+            elif status_code == 429:
+                code = ErrorCode.RATE_LIMITED
+                kwargs.setdefault("retry_after", 60)
+            elif status_code and 400 <= status_code < 500:
+                code = ErrorCode.BAD_REQUEST
+            elif status_code and status_code >= 500:
+                code = ErrorCode.UPSTREAM_UNAVAILABLE
+            else:
+                code = ErrorCode.UPSTREAM_UNAVAILABLE
+        else:
+            # Use detailed error codes for backward compatibility
+            code = kwargs.pop("code", ErrorCode.API_ERROR)
+            if status_code == 401:
+                code = ErrorCode.API_UNAUTHORIZED
+            elif status_code == 403:
+                code = ErrorCode.API_FORBIDDEN
+            elif status_code == 404:
+                code = ErrorCode.API_NOT_FOUND
+            elif status_code == 429:
+                code = ErrorCode.API_RATE_LIMIT
+                kwargs.setdefault("retry_after", 60)
+            elif status_code and status_code >= 500:
+                code = ErrorCode.API_SERVER_ERROR
 
         kwargs["details"] = details
         super().__init__(code, message, **kwargs)
@@ -133,12 +187,28 @@ class ApiError(McpError):
 class ValidationError(McpError):
     """Error raised when input validation fails."""
 
-    def __init__(self, message: str, field: Optional[str] = None, **kwargs):
-        """Initialize validation error."""
-        code = kwargs.pop("code", ErrorCode.VALIDATION_ERROR)
+    def __init__(
+        self,
+        message: str,
+        field: Optional[str] = None,
+        validation_errors: Optional[list] = None,
+        **kwargs,
+    ):
+        """
+        Initialize validation error.
+        
+        Args:
+            message: Human-readable error message
+            field: Field that failed validation (optional)
+            validation_errors: List of machine-readable validation errors from JSON Schema
+            **kwargs: Additional arguments passed to McpError
+        """
+        code = kwargs.pop("code", ErrorCode.BAD_REQUEST)
         details = kwargs.get("details", {})
         if field:
             details["field"] = field
+        if validation_errors:
+            details["validation_errors"] = validation_errors
 
         kwargs["details"] = details
         super().__init__(code, message, **kwargs)
@@ -227,4 +297,223 @@ def create_error_response(
         docs_url=docs_url,
     )
     return format_error_response(error)
+
+
+def map_upstream_error(error: Exception) -> McpError:
+    """
+    Map upstream errors (HTTP exceptions, timeouts, etc.) to standardized MCP errors.
+    
+    This function categorizes common upstream errors into the simplified error codes
+    that LLMs can reason about:
+    - UPSTREAM_UNAVAILABLE: API down, timeout, 5xx errors
+    - BAD_REQUEST: Invalid arguments, schema validation failures
+    - RATE_LIMITED: Rate limit exceeded
+    - NOT_FOUND: Resource not found
+    - INTERNAL_ERROR: Unexpected errors
+    
+    Args:
+        error: The upstream exception to map
+        
+    Returns:
+        McpError with appropriate error code
+    """
+    # Handle requests library exceptions
+    if isinstance(error, requests.exceptions.Timeout):
+        return McpError(
+            code=ErrorCode.UPSTREAM_UNAVAILABLE,
+            message="Request to upstream service timed out",
+            details={"error_type": type(error).__name__},
+            original_error=error,
+        )
+    
+    if isinstance(error, requests.exceptions.ConnectionError):
+        return McpError(
+            code=ErrorCode.UPSTREAM_UNAVAILABLE,
+            message="Unable to connect to upstream service",
+            details={"error_type": type(error).__name__},
+            original_error=error,
+        )
+    
+    if isinstance(error, requests.exceptions.HTTPError):
+        response = getattr(error.response, 'status_code', None)
+        if response == 404:
+            return McpError(
+                code=ErrorCode.NOT_FOUND,
+                message="Resource not found",
+                details={"status_code": response, "error_type": type(error).__name__},
+                original_error=error,
+            )
+        elif response == 429:
+            retry_after = None
+            if hasattr(error.response, 'headers'):
+                retry_after_header = error.response.headers.get('Retry-After')
+                if retry_after_header:
+                    try:
+                        retry_after = int(retry_after_header)
+                    except (ValueError, TypeError):
+                        pass
+            return McpError(
+                code=ErrorCode.RATE_LIMITED,
+                message="Rate limit exceeded",
+                details={"status_code": response, "error_type": type(error).__name__},
+                retry_after=retry_after or 60,
+                original_error=error,
+            )
+        elif response and 400 <= response < 500:
+            return McpError(
+                code=ErrorCode.BAD_REQUEST,
+                message=f"Invalid request: {str(error)}",
+                details={"status_code": response, "error_type": type(error).__name__},
+                original_error=error,
+            )
+        elif response and response >= 500:
+            return McpError(
+                code=ErrorCode.UPSTREAM_UNAVAILABLE,
+                message="Upstream service error",
+                details={"status_code": response, "error_type": type(error).__name__},
+                original_error=error,
+            )
+    
+    # Handle httpx library exceptions (async HTTP client)
+    if HTTPX_AVAILABLE and isinstance(error, httpx.TimeoutException):
+        return McpError(
+            code=ErrorCode.UPSTREAM_UNAVAILABLE,
+            message="Request to upstream service timed out",
+            details={"error_type": type(error).__name__},
+            original_error=error,
+        )
+    
+    if isinstance(error, httpx.ConnectError):
+        return McpError(
+            code=ErrorCode.UPSTREAM_UNAVAILABLE,
+            message="Unable to connect to upstream service",
+            details={"error_type": type(error).__name__},
+            original_error=error,
+        )
+    
+    if HTTPX_AVAILABLE and isinstance(error, httpx.HTTPStatusError):
+        response = error.response.status_code
+        if response == 404:
+            return McpError(
+                code=ErrorCode.NOT_FOUND,
+                message="Resource not found",
+                details={"status_code": response, "error_type": type(error).__name__},
+                original_error=error,
+            )
+        elif response == 429:
+            retry_after = None
+            if hasattr(error.response, 'headers'):
+                retry_after_header = error.response.headers.get('Retry-After')
+                if retry_after_header:
+                    try:
+                        retry_after = int(retry_after_header)
+                    except (ValueError, TypeError):
+                        pass
+            return McpError(
+                code=ErrorCode.RATE_LIMITED,
+                message="Rate limit exceeded",
+                details={"status_code": response, "error_type": type(error).__name__},
+                retry_after=retry_after or 60,
+                original_error=error,
+            )
+        elif 400 <= response < 500:
+            return McpError(
+                code=ErrorCode.BAD_REQUEST,
+                message=f"Invalid request: {str(error)}",
+                details={"status_code": response, "error_type": type(error).__name__},
+                original_error=error,
+            )
+        elif response >= 500:
+            return McpError(
+                code=ErrorCode.UPSTREAM_UNAVAILABLE,
+                message="Upstream service error",
+                details={"status_code": response, "error_type": type(error).__name__},
+                original_error=error,
+            )
+    
+    # Handle validation errors
+    if isinstance(error, (ValueError, TypeError, KeyError)):
+        return McpError(
+            code=ErrorCode.BAD_REQUEST,
+            message=f"Invalid input: {str(error)}",
+            details={"error_type": type(error).__name__},
+            original_error=error,
+        )
+    
+    # Handle file not found
+    if isinstance(error, FileNotFoundError):
+        return McpError(
+            code=ErrorCode.NOT_FOUND,
+            message=f"Resource not found: {str(error)}",
+            details={"error_type": type(error).__name__},
+            original_error=error,
+        )
+    
+    # Handle known MCP errors (pass through)
+    if isinstance(error, McpError):
+        return error
+    
+    # Default to internal error for unknown exceptions
+    return McpError(
+        code=ErrorCode.INTERNAL_ERROR,
+        message=f"An unexpected error occurred: {str(error)}",
+        details={"error_type": type(error).__name__},
+        original_error=error,
+    )
+
+
+def handle_mcp_tool_error(func: Callable) -> Callable:
+    """
+    Decorator to automatically catch and convert exceptions in MCP tool functions.
+    
+    This decorator wraps MCP tool functions to:
+    1. Catch all exceptions
+    2. Map them to standardized McpError using map_upstream_error
+    3. Return structured JSON error response instead of raising
+    
+    Usage:
+        @handle_mcp_tool_error
+        async def my_tool(arg1: str) -> Dict[str, Any]:
+            # Tool implementation
+            return {"result": "success"}
+    
+    Args:
+        func: The MCP tool function to wrap
+        
+    Returns:
+        Wrapped function that returns structured error responses
+    """
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            # Map the error to a standardized MCP error
+            mcp_error = map_upstream_error(e)
+            # Return structured error response (never a stack trace)
+            return {
+                "error": mcp_error.to_dict(include_traceback=False),
+                "success": False,
+            }
+    
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        """Synchronous version of the wrapper."""
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            # Map the error to a standardized MCP error
+            mcp_error = map_upstream_error(e)
+            # Return structured error response (never a stack trace)
+            return {
+                "error": mcp_error.to_dict(include_traceback=False),
+                "success": False,
+            }
+    
+    # Return async wrapper if function is async, sync wrapper otherwise
+    import inspect
+    if inspect.iscoroutinefunction(func):
+        return wrapper
+    else:
+        return sync_wrapper
 

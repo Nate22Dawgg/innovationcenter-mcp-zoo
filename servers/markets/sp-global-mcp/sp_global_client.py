@@ -47,8 +47,10 @@ class SPGlobalClient:
         self.api_key = api_key or os.getenv("SP_GLOBAL_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "API key is required. Set SP_GLOBAL_API_KEY environment variable "
-                "or pass api_key parameter."
+                "SP_GLOBAL_API_KEY environment variable is required. "
+                "This is a required configuration - the service will not function without it. "
+                "Please set SP_GLOBAL_API_KEY in your environment or configuration. "
+                "Contact S&P Global Market Intelligence support for API access."
             )
         
         # Default base URL - replace with actual S&P Global API endpoint

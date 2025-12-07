@@ -14,6 +14,8 @@ from .errors import (
     ErrorCode,
     format_error_response,
     create_error_response,
+    map_upstream_error,
+    handle_mcp_tool_error,
 )
 from .logging import (
     get_logger,
@@ -22,8 +24,25 @@ from .logging import (
     log_response,
     log_error,
     request_context,
+    generate_correlation_id,
 )
 from .metrics import MetricsCollector, get_metrics_collector
+from .tracing import (
+    generate_trace_id,
+    get_trace_id,
+    set_trace_id,
+    get_correlation_id,
+    set_correlation_id,
+    get_trace_context,
+    inject_trace_headers,
+    extract_trace_headers,
+    propagate_trace_context,
+)
+from .observability import (
+    observe_tool_call,
+    observe_tool_call_sync,
+    create_observable_tool_wrapper,
+)
 from .rate_limit import (
     RateLimiter,
     TokenBucket,
@@ -43,6 +62,47 @@ from .health import (
     HealthCheckResult,
     create_health_check_response,
 )
+from .http import (
+    CallOptions,
+    call_upstream,
+    call_upstream_async,
+    get,
+    get_async,
+    post,
+    post_async,
+)
+try:
+    from .validation import (
+        SchemaValidator,
+        get_validator,
+        validate_tool_input,
+        validate_tool_output,
+        validated_tool,
+    )
+except ImportError:
+    # Validation module may not exist in all installations
+    pass
+from .phi import (
+    redact_phi,
+    is_phi_field,
+    mark_ephemeral,
+    mark_stored,
+    is_ephemeral,
+    should_persist,
+)
+from .config import (
+    ConfigIssue,
+    ServerConfig,
+    ConfigValidationError,
+    validate_config_or_raise,
+)
+from .cache import (
+    Cache,
+    CacheEntry,
+    get_cache,
+    build_cache_key,
+    build_cache_key_simple,
+)
 
 __all__ = [
     # Errors
@@ -54,6 +114,8 @@ __all__ = [
     "ErrorCode",
     "format_error_response",
     "create_error_response",
+    "map_upstream_error",
+    "handle_mcp_tool_error",
     # Logging
     "get_logger",
     "setup_logging",
@@ -61,9 +123,24 @@ __all__ = [
     "log_response",
     "log_error",
     "request_context",
+    "generate_correlation_id",
     # Metrics
     "MetricsCollector",
     "get_metrics_collector",
+    # Tracing
+    "generate_trace_id",
+    "get_trace_id",
+    "set_trace_id",
+    "get_correlation_id",
+    "set_correlation_id",
+    "get_trace_context",
+    "inject_trace_headers",
+    "extract_trace_headers",
+    "propagate_trace_context",
+    # Observability
+    "observe_tool_call",
+    "observe_tool_call_sync",
+    "create_observable_tool_wrapper",
     # Rate Limiting
     "RateLimiter",
     "TokenBucket",
@@ -80,5 +157,37 @@ __all__ = [
     "HealthStatus",
     "HealthCheckResult",
     "create_health_check_response",
+    # HTTP Client
+    "CallOptions",
+    "call_upstream",
+    "call_upstream_async",
+    "get",
+    "get_async",
+    "post",
+    "post_async",
+    # Validation
+    "SchemaValidator",
+    "get_validator",
+    "validate_tool_input",
+    "validate_tool_output",
+    "validated_tool",
+    # Configuration
+    "ConfigIssue",
+    "ServerConfig",
+    "ConfigValidationError",
+    "validate_config_or_raise",
+    # Cache
+    "Cache",
+    "CacheEntry",
+    "get_cache",
+    "build_cache_key",
+    "build_cache_key_simple",
+    # PHI Handling
+    "redact_phi",
+    "is_phi_field",
+    "mark_ephemeral",
+    "mark_stored",
+    "is_ephemeral",
+    "should_persist",
 ]
 

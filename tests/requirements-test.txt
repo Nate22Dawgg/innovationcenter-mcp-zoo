@@ -30,3 +30,6 @@ mcp>=0.1.0
 # Utilities
 python-dotenv>=1.0.0
 
+# JSON Schema validation
+jsonschema>=4.17.0
+

@@ -1,0 +1,10 @@
+# Playwright MCP Server Requirements
+
+# MCP SDK
+mcp>=1.0.0
+
+# Playwright for browser automation
+playwright>=1.40.0
+
+# Common dependencies (from parent directory)
+# These should be available via sys.path insertion in server.py

@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Property address or property ID"
+    },
+    "property_id": {
+      "type": "string",
+      "description": "Optional property ID (APN or other identifier)"
+    },
+    "county": {
+      "type": "string",
+      "description": "County name (optional, helps with routing)"
+    },
+    "state": {
+      "type": "string",
+      "description": "State abbreviation (optional, helps with routing)"
+    }
+  },
+  "required": ["address"]
+}

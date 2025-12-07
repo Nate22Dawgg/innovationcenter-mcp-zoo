@@ -6,34 +6,65 @@ This directory contains comprehensive test suites for all MCP servers in the inn
 
 ```
 tests/
-├── unit/              # Unit tests for individual tools
-├── integration/       # Integration tests for server startup
-├── e2e/              # End-to-end tests with real API calls (cached)
-├── fixtures/         # Mock data and VCR cassettes
+├── schema/           # Schema validation tests
+│   └── test_schema_validation.py
+├── unit/            # Unit tests for individual tools
+│   ├── test_edge_cases.py  # Edge case tests
+│   └── test_*.py     # Server-specific unit tests
+├── contract/        # Contract/integration tests
+│   └── test_api_contracts.py
+├── e2e/            # End-to-end tests with MCP protocol
+│   └── test_e2e_mcp_protocol.py
+├── common/          # Common test utilities
+│   └── test_base_mcp_server.py
+├── integration/     # Integration tests for server startup
+├── fixtures/        # Mock data and VCR cassettes
 │   ├── vcr_cassettes/  # Cached API responses
 │   └── *.json         # Sample response data
-├── conftest.py       # Shared pytest fixtures
-└── README.md         # This file
+├── conftest.py      # Shared pytest fixtures
+├── validate_robustness.py  # Robustness validation script
+├── ROBUSTNESS_GUIDE.md     # Robustness standards guide
+└── README.md        # This file
 ```
 
 ## Test Categories
+
+### Schema Tests (`tests/schema/`)
+- Validate all `schemas/*.json` as correct JSON Schema
+- Ensure `tools_registry.json` references only existing schemas
+- Validate schema structure and property types
+- Run with: `pytest tests/schema/ -m schema`
 
 ### Unit Tests (`tests/unit/`)
 - Test individual tool functions in isolation
 - Use mocks to avoid real API calls
 - Fast execution
-- Test error handling and edge cases
+- Test error handling and edge cases:
+  - Empty results
+  - Huge results
+  - Invalid inputs
+  - Rate limited upstreams
+  - Network errors
+  - Timeout errors
+- Run with: `pytest tests/unit/ -m unit`
+
+### Contract/Integration Tests (`tests/contract/`)
+- Hit real upstream APIs with VCR-style recording
+- Assert minimal invariants: Non-empty, expected fields, no unexpected exceptions
+- Use static fixtures to keep tests stable
+- Run with: `pytest tests/contract/ -m contract`
+
+### End-to-End Tests (`tests/e2e/`)
+- Spawn server, call tools using MCP protocol
+- Verify full request → response behavior including error mapping
+- Test MCP protocol compliance
+- Run with: `pytest tests/e2e/ -m e2e`
 
 ### Integration Tests (`tests/integration/`)
 - Test server initialization and startup
 - Verify tool registration
 - Test server configuration
-
-### End-to-End Tests (`tests/e2e/`)
-- Test real API interactions
-- Use VCR.py to cache responses
-- Slower execution
-- Verify actual API integration
+- Run with: `pytest tests/integration/ -m integration`
 
 ## Running Tests
 
@@ -52,14 +83,23 @@ pytest
 ### Run Specific Test Categories
 
 ```bash
+# Schema validation tests
+pytest tests/schema/ -m schema
+
 # Unit tests only
 pytest tests/unit/ -m unit
+
+# Contract/integration tests
+pytest tests/contract/ -m contract
+
+# E2E tests only
+pytest tests/e2e/ -m e2e
 
 # Integration tests only
 pytest tests/integration/ -m integration
 
-# E2E tests only
-pytest tests/e2e/ -m e2e
+# Edge case tests
+pytest tests/unit/test_edge_cases.py -m edge_cases
 ```
 
 ### Run Tests for Specific Server
@@ -96,7 +136,10 @@ Coverage report will be generated in `htmlcov/index.html`.
 
 Tests are marked with categories for easy filtering:
 
+- `@pytest.mark.schema` - Schema validation tests
 - `@pytest.mark.unit` - Unit tests
+- `@pytest.mark.edge_cases` - Edge case tests
+- `@pytest.mark.contract` - Contract/integration tests
 - `@pytest.mark.integration` - Integration tests
 - `@pytest.mark.e2e` - End-to-end tests
 - `@pytest.mark.slow` - Tests that take longer to run
@@ -108,6 +151,12 @@ Example:
 ```bash
 # Run only fast unit tests
 pytest -m "unit and not slow"
+
+# Run schema validation
+pytest -m schema
+
+# Run edge case tests
+pytest -m edge_cases
 ```
 
 ## VCR.py for API Response Caching
@@ -283,14 +332,36 @@ pip install mcp>=0.1.0
 - **Integration Tests**: All servers should have startup tests
 - **E2E Tests**: At least one E2E test per server
 
+## Robustness Validation
+
+Check that servers follow robustness standards:
+
+```bash
+python tests/validate_robustness.py
+```
+
+This validates:
+- Use of common error classes
+- Use of common logging
+- Use of common rate limiting
+- Use of common circuit breakers
+- Use of common metrics
+- Input validation
+- Error handling patterns
+
+See [ROBUSTNESS_GUIDE.md](./ROBUSTNESS_GUIDE.md) for detailed standards.
+
 ## Contributing
 
 When adding new servers or tools:
 
-1. Add unit tests in `tests/unit/test_<server_name>.py`
-2. Add integration test in `tests/integration/test_server_startup.py`
-3. Add at least one E2E test in `tests/e2e/`
-4. Update this README if needed
+1. Add schema validation (if applicable)
+2. Add unit tests in `tests/unit/test_<server_name>.py` with edge cases
+3. Add contract test in `tests/contract/` if calling external APIs
+4. Add integration test in `tests/integration/test_server_startup.py`
+5. Add at least one E2E test in `tests/e2e/`
+6. Ensure server follows robustness standards (run `validate_robustness.py`)
+7. Update this README if needed
 
 ## Resources
 

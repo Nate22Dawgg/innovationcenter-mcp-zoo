@@ -16,11 +16,23 @@ from typing import Any, Dict, List, Optional
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
 from company_aggregator import get_profile, search_companies
 from clinical_trials_client import get_pipeline_drugs, get_target_exposure
 from sec_edgar_client import get_ipo_filings, get_investors_from_filings
-from cache import Cache
 from yfinance_client import get_timeseries as _get_timeseries
+
+# Import new dossier tools
+from dossier_generator import generate_biotech_company_dossier
+from dossier_refiner import refine_biotech_dossier
+from artifact_store import get_artifact_store
+
+# Import config
+from config import load_config
+from common.config import validate_config_or_raise, ConfigValidationError
+from common.cache import get_cache, build_cache_key
 
 # Try to import MCP SDK - fallback to basic implementation if not available
 try:
@@ -33,9 +45,20 @@ except ImportError:
     MCP_AVAILABLE = False
     print("Warning: MCP SDK not found. Install with: pip install mcp", file=sys.stderr)
 
+# Load and validate configuration
+try:
+    _config = load_config()
+    _fail_fast = os.getenv("BIOTECH_MARKETS_FAIL_FAST", "false").lower() in ("true", "1", "yes", "on")
+    _config_valid, _config_error_payload = validate_config_or_raise(_config, fail_fast=_fail_fast)
+    if not _config_valid:
+        print(f"Warning: Configuration validation failed. Server starting in degraded mode.", file=sys.stderr)
+except ConfigValidationError as e:
+    print(f"Configuration error: {e}", file=sys.stderr)
+    if _fail_fast:
+        sys.exit(1)
 
-# Initialize cache
-_cache = Cache()
+# Initialize cache (use common.cache)
+_cache = get_cache()
 
 
 # Tool implementations
@@ -273,8 +296,9 @@ async def markets_get_timeseries(
             "end_date": end_date
         }
         
-        # Check cache first
-        cached_result = _cache.get("markets_timeseries", cache_params)
+        # Check cache first (using common.cache)
+        cache_key = build_cache_key("biotech-markets-mcp", "markets.get_timeseries", cache_params)
+        cached_result = _cache.get(cache_key)
         if cached_result:
             cached_result["metadata"]["cache_status"] = "cached"
             return cached_result
@@ -309,8 +333,8 @@ async def markets_get_timeseries(
         
         # Cache with appropriate TTL (7 days for historical, 1 hour for recent)
         if "error" not in result:
-            ttl_hours = 1 if is_recent else 168  # 1 hour for recent, 7 days (168 hours) for historical
-            _cache.set("markets_timeseries", cache_params, result, ttl_hours=ttl_hours)
+            ttl_seconds = (1 * 60 * 60) if is_recent else (168 * 60 * 60)  # 1 hour for recent, 7 days for historical
+            _cache.set(cache_key, result, ttl_seconds=ttl_seconds)
         
         return result
         
@@ -473,6 +497,101 @@ if MCP_AVAILABLE:
                     "required": ["symbol"],
                     "additionalProperties": False
                 }
+            ),
+            Tool(
+                name="generate_biotech_company_dossier",
+                description="Generate a comprehensive biotech company dossier by aggregating data from multiple sources (SEC, ClinicalTrials.gov, PubMed)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "company_identifier": {
+                            "type": "object",
+                            "description": "Company identifier (ticker and/or CIK)",
+                            "properties": {
+                                "ticker": {
+                                    "type": ["string", "null"],
+                                    "description": "Stock ticker symbol (e.g., 'MRNA', 'BNTX')",
+                                    "pattern": "^[A-Z0-9.-]+$"
+                                },
+                                "cik": {
+                                    "type": ["string", "null"],
+                                    "description": "SEC CIK (Central Index Key), 10-digit zero-padded or numeric string"
+                                },
+                                "company_name": {
+                                    "type": ["string", "null"],
+                                    "description": "Company name (used if ticker/CIK not provided)"
+                                }
+                            },
+                            "minProperties": 1,
+                            "additionalProperties": False
+                        },
+                        "include_publications": {
+                            "type": "boolean",
+                            "description": "Whether to include PubMed publications",
+                            "default": True
+                        },
+                        "include_trials": {
+                            "type": "boolean",
+                            "description": "Whether to include detailed clinical trials information",
+                            "default": True
+                        },
+                        "include_financials": {
+                            "type": "boolean",
+                            "description": "Whether to include financial information from SEC filings",
+                            "default": True
+                        },
+                        "max_publications": {
+                            "type": "integer",
+                            "description": "Maximum number of publications to include",
+                            "minimum": 0,
+                            "maximum": 100,
+                            "default": 10
+                        },
+                        "max_trials": {
+                            "type": "integer",
+                            "description": "Maximum number of trials to include in detail",
+                            "minimum": 0,
+                            "maximum": 100,
+                            "default": 20
+                        }
+                    },
+                    "required": ["company_identifier"],
+                    "additionalProperties": False
+                }
+            ),
+            Tool(
+                name="refine_biotech_dossier",
+                description="Refine and analyze a biotech company dossier based on a question or focus areas without making new API calls",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "dossier": {
+                            "type": ["object", "null"],
+                            "description": "Full dossier object to refine (if provided, dossier_id is ignored)"
+                        },
+                        "dossier_id": {
+                            "type": ["string", "null"],
+                            "description": "Reference ID of stored dossier artifact (if dossier not provided)"
+                        },
+                        "new_question": {
+                            "type": ["string", "null"],
+                            "description": "New question to answer based on the dossier (e.g., 'What are the main risks?')"
+                        },
+                        "focus_areas": {
+                            "type": ["array", "null"],
+                            "description": "Specific areas to focus on (e.g., ['pipeline', 'financials', 'risks'])",
+                            "items": {
+                                "type": "string",
+                                "enum": ["pipeline", "financials", "risks", "publications", "trials", "investors"]
+                            }
+                        }
+                    },
+                    "anyOf": [
+                        {"required": ["dossier"]},
+                        {"required": ["dossier_id"]}
+                    ],
+                    "additionalProperties": False
+                }
             )
         ]
     
@@ -494,6 +613,10 @@ if MCP_AVAILABLE:
                 result = await biotech_analyze_target_exposure(**arguments)
             elif name == "markets.get_timeseries":
                 result = await markets_get_timeseries(**arguments)
+            elif name == "generate_biotech_company_dossier":
+                result = await generate_biotech_company_dossier(**arguments)
+            elif name == "refine_biotech_dossier":
+                result = await refine_biotech_dossier(**arguments)
             else:
                 raise ValueError(f"Unknown tool: {name}")
             

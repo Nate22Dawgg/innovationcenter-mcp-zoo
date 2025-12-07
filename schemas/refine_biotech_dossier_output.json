@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Refine Biotech Dossier Output",
+  "description": "Output schema for refined biotech company dossier",
+  "type": "object",
+  "properties": {
+    "refined_dossier": {
+      "type": "object",
+      "description": "Refined dossier object",
+      "$ref": "biotech_company_dossier.schema.json"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Text summary answering the question or focusing on specified areas"
+    },
+    "key_insights": {
+      "type": "array",
+      "description": "Key insights extracted from the dossier",
+      "items": {
+        "type": "string"
+      }
+    },
+    "focus_areas_covered": {
+      "type": "array",
+      "description": "Areas that were analyzed",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "refined_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "question": {
+          "type": ["string", "null"]
+        },
+        "used_cached_dossier": {
+          "type": "boolean",
+          "description": "Whether a cached dossier was used (no new API calls)"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["refined_dossier", "summary", "key_insights"],
+  "additionalProperties": false
+}

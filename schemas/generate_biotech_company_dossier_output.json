@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Generate Biotech Company Dossier Output",
+  "description": "Output schema for biotech company dossier generation",
+  "$ref": "biotech_company_dossier.schema.json"
+}

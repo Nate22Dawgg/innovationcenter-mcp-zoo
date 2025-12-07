@@ -18,11 +18,18 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Add parent directory to path for schema loading
+# Add parent directory to path for schema loading and common modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from data_source_router import DataSourceRouter
 from cache import Cache
+from config import load_config, RealEstateConfig
+from common.config import validate_config_or_raise, ConfigValidationError
+from common.errors import ErrorCode
+from common.logging import get_logger
+from investment_analysis import generate_property_investment_brief, compare_properties
+
+logger = get_logger(__name__)
 
 # Try to import MCP SDK - fallback to basic implementation if not available
 try:
@@ -49,6 +56,16 @@ def load_schema(schema_path: str) -> Dict[str, Any]:
 # Initialize router and cache
 _cache: Optional[Cache] = None
 _router: Optional[DataSourceRouter] = None
+_config: Optional[RealEstateConfig] = None
+_config_error_payload: Optional[Dict[str, Any]] = None
+
+
+def get_config() -> RealEstateConfig:
+    """Get or load server configuration."""
+    global _config
+    if _config is None:
+        _config = load_config()
+    return _config
 
 
 def get_router() -> DataSourceRouter:
@@ -241,6 +258,92 @@ async def real_estate_get_market_trends(
         }
 
 
+async def real_estate_generate_property_investment_brief(
+    address: str,
+    property_id: Optional[str] = None,
+    county: Optional[str] = None,
+    state: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Generate a comprehensive investment brief for a property.
+    
+    Aggregates data from multiple sources:
+    - Property lookup
+    - Tax records
+    - Recent sales
+    - Market trends
+    
+    Produces investment metrics including yield estimates, IRR heuristics, and red flags.
+    
+    Args:
+        address: Property address or property ID
+        property_id: Optional property ID (APN or other identifier)
+        county: County name (optional, helps with routing)
+        state: State abbreviation (optional, helps with routing)
+    
+    Returns:
+        PropertyInvestmentBrief dictionary
+    """
+    try:
+        router = get_router()
+        result = await generate_property_investment_brief(
+            address=address,
+            property_id=property_id,
+            county=county,
+            state=state,
+            router=router
+        )
+        return result
+    except Exception as e:
+        return {
+            "error": str(e),
+            "address": address
+        }
+
+
+async def real_estate_compare_properties(
+    properties: List[str],
+    county: Optional[str] = None,
+    state: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Compare multiple properties side-by-side for investment analysis.
+    
+    Args:
+        properties: List of property addresses or property IDs (2-10 properties)
+        county: County name (optional, if all properties are in same county)
+        state: State abbreviation (optional, if all properties are in same state)
+    
+    Returns:
+        PropertyComparison dictionary with per-property metrics and summary
+    """
+    try:
+        if len(properties) < 2:
+            return {
+                "error": "At least 2 properties required for comparison",
+                "properties": properties
+            }
+        if len(properties) > 10:
+            return {
+                "error": "Maximum 10 properties allowed for comparison",
+                "properties": properties
+            }
+        
+        router = get_router()
+        result = await compare_properties(
+            properties=properties,
+            county=county,
+            state=state,
+            router=router
+        )
+        return result
+    except Exception as e:
+        return {
+            "error": str(e),
+            "properties": properties
+        }
+
+
 # MCP Server setup
 if MCP_AVAILABLE:
     # Create MCP server
@@ -380,6 +483,16 @@ if MCP_AVAILABLE:
                     },
                     "required": []
                 }
+            ),
+            Tool(
+                name="real_estate_generate_property_investment_brief",
+                description="Generate a comprehensive investment brief for a property. Aggregates property data, tax records, recent sales, and market trends to produce investment metrics including yield estimates, IRR heuristics, and red flags.",
+                inputSchema=brief_input_schema
+            ),
+            Tool(
+                name="real_estate_compare_properties",
+                description="Compare multiple properties side-by-side for investment analysis. Provides per-property metrics and summary recommendations to help choose the best investment.",
+                inputSchema=compare_input_schema
             )
         ]
     
@@ -387,6 +500,18 @@ if MCP_AVAILABLE:
     async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle tool calls."""
         try:
+            # Check for configuration errors (fail-soft behavior)
+            if _config_error_payload and name in [
+                "real_estate_property_lookup",
+                "real_estate_address_enrichment",
+                "real_estate_generate_property_investment_brief"
+            ]:
+                # These tools may require BatchData API key
+                return [TextContent(
+                    type="text",
+                    text=json.dumps(_config_error_payload, indent=2)
+                )]
+            
             if name == "real_estate_property_lookup":
                 result = await real_estate_property_lookup(**arguments)
             elif name == "real_estate_address_enrichment":
@@ -399,6 +524,10 @@ if MCP_AVAILABLE:
                 result = await real_estate_search_recent_sales(**arguments)
             elif name == "real_estate_get_market_trends":
                 result = await real_estate_get_market_trends(**arguments)
+            elif name == "real_estate_generate_property_investment_brief":
+                result = await real_estate_generate_property_investment_brief(**arguments)
+            elif name == "real_estate_compare_properties":
+                result = await real_estate_compare_properties(**arguments)
             else:
                 raise ValueError(f"Unknown tool: {name}")
             

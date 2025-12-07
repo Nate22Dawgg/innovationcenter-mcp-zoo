@@ -9,8 +9,16 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.cache import get_cache, build_cache_key
+
 # Add parent directories to path to import clinical_trials_api
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "clinical" / "clinical-trials-mcp"))
+
+# Initialize cache
+_cache = get_cache()
 
 try:
     from clinical_trials_api import search_trials, get_trial_detail
@@ -97,6 +105,16 @@ def get_company_trials(company_name: str, limit: int = 50) -> List[Dict[str, Any
     Returns:
         List of trial dictionaries with NCT ID, title, phase, status, etc.
     """
+    # Check cache first (12 hour TTL for clinical trials)
+    cache_key = build_cache_key(
+        "biotech-markets-mcp",
+        "get_company_trials",
+        {"company_name": company_name, "limit": limit}
+    )
+    cached_result = _cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
     # ClinicalTrials.gov API doesn't directly support sponsor search in query
     # We need to search and filter by sponsor name
     # Try multiple search strategies
@@ -133,7 +151,10 @@ def get_company_trials(company_name: str, limit: int = 50) -> List[Dict[str, Any
         if company_lower in sponsor or sponsor in company_lower:
             filtered_trials.append(trial)
     
-    return filtered_trials[:limit]
+    result = filtered_trials[:limit]
+    # Cache result (12 hours)
+    _cache.set(cache_key, result, ttl_seconds=12 * 60 * 60)
+    return result
 
 
 def get_pipeline_drugs(company_name: str) -> List[Dict[str, Any]]:
@@ -146,6 +167,16 @@ def get_pipeline_drugs(company_name: str) -> List[Dict[str, Any]]:
     Returns:
         List of drugs with phase information
     """
+    # Check cache first (12 hour TTL for pipeline drugs)
+    cache_key = build_cache_key(
+        "biotech-markets-mcp",
+        "get_pipeline_drugs",
+        {"company_name": company_name}
+    )
+    cached_result = _cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
     trials = get_company_trials(company_name, limit=100)
     
     # Extract unique drugs/interventions
@@ -202,6 +233,8 @@ def get_pipeline_drugs(company_name: str) -> List[Dict[str, Any]]:
     # Sort by phase (later phases first)
     pipeline.sort(key=lambda x: _phase_order(x["latest_phase"]), reverse=True)
     
+    # Cache result (12 hours)
+    _cache.set(cache_key, pipeline, ttl_seconds=12 * 60 * 60)
     return pipeline
 
 

@@ -1,0 +1,155 @@
+{
+  "type": "object",
+  "properties": {
+    "address": {
+      "type": "string",
+      "description": "Normalized property address"
+    },
+    "property_id": {
+      "type": "string",
+      "description": "Property identifier (APN or other ID if available)"
+    },
+    "tax_info": {
+      "type": "object",
+      "description": "Property tax information",
+      "properties": {
+        "assessed_value": {
+          "type": "number",
+          "description": "Assessed property value"
+        },
+        "tax_amount": {
+          "type": "number",
+          "description": "Annual tax amount"
+        },
+        "tax_year": {
+          "type": "integer",
+          "description": "Tax year"
+        },
+        "tax_rate": {
+          "type": "number",
+          "description": "Effective tax rate (percentage)"
+        }
+      }
+    },
+    "recent_sales": {
+      "type": "array",
+      "description": "Recent sales data for the property",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sale_date": {
+            "type": "string",
+            "description": "Sale date (ISO format)"
+          },
+          "sale_price": {
+            "type": "number",
+            "description": "Sale price"
+          },
+          "sale_type": {
+            "type": "string",
+            "description": "Type of sale (e.g., 'arms_length', 'foreclosure')"
+          }
+        }
+      }
+    },
+    "rent_comps": {
+      "type": "object",
+      "description": "Rental comparables and estimates",
+      "properties": {
+        "estimated_monthly_rent": {
+          "type": "number",
+          "description": "Estimated monthly rental income"
+        },
+        "rent_per_sqft": {
+          "type": "number",
+          "description": "Estimated rent per square foot"
+        },
+        "comparable_rents": {
+          "type": "array",
+          "description": "Comparable rental properties",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string"
+              },
+              "monthly_rent": {
+                "type": "number"
+              },
+              "sqft": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "price_per_sqft": {
+      "type": "number",
+      "description": "Price per square foot (if available)"
+    },
+    "estimated_value": {
+      "type": "number",
+      "description": "Estimated property value"
+    },
+    "irr_estimate": {
+      "type": "number",
+      "description": "Estimated Internal Rate of Return (IRR) as percentage (if calculable)"
+    },
+    "yield_estimate": {
+      "type": "number",
+      "description": "Estimated yield/cap rate as percentage (if calculable)"
+    },
+    "market_trends": {
+      "type": "object",
+      "description": "Local market trends",
+      "properties": {
+        "median_price": {
+          "type": "number"
+        },
+        "price_trend": {
+          "type": "string",
+          "enum": ["increasing", "decreasing", "stable"]
+        },
+        "days_on_market": {
+          "type": "number"
+        }
+      }
+    },
+    "red_flags": {
+      "type": "array",
+      "description": "Array of red flags or warnings about the property",
+      "items": {
+        "type": "string"
+      }
+    },
+    "property_details": {
+      "type": "object",
+      "description": "Additional property details",
+      "properties": {
+        "property_type": {
+          "type": "string"
+        },
+        "square_feet": {
+          "type": "number"
+        },
+        "bedrooms": {
+          "type": "integer"
+        },
+        "bathrooms": {
+          "type": "number"
+        },
+        "year_built": {
+          "type": "integer"
+        },
+        "lot_size": {
+          "type": "number"
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if brief generation failed"
+    }
+  }
+}

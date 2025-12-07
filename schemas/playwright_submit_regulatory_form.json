@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Submit Regulatory Form Input",
+  "description": "Input schema for submitting regulatory forms with idempotency and safety guardrails",
+  "type": "object",
+  "required": ["idempotency_key", "url"],
+  "properties": {
+    "idempotency_key": {
+      "type": "string",
+      "description": "Unique key to ensure idempotency. If the same key is used again with identical parameters, the previous result will be returned without re-executing.",
+      "minLength": 1,
+      "examples": ["form-submit-2024-01-15-001", "fda-form-abc123"]
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the form to submit",
+      "examples": ["https://www.fda.gov/forms/submit", "https://example.com/regulatory-form"]
+    },
+    "dry_run": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, preview the form submission without actually submitting. If false, requires explicit confirmation."
+    },
+    "confirm": {
+      "type": "string",
+      "description": "Confirmation phrase required when dry_run is false. Must equal 'I_understand_this_updates_real_data' to proceed with actual submission.",
+      "examples": ["I_understand_this_updates_real_data"]
+    },
+    "form_data": {
+      "type": "object",
+      "description": "Form fields to fill. Keys are field names/selectors, values are the values to enter.",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "examples": [
+        {
+          "input[name='company_name']": "Acme Pharmaceuticals",
+          "input[name='drug_name']": "NewDrug123",
+          "textarea[name='description']": "Description of the drug"
+        }
+      ]
+    },
+    "submit_button_selector": {
+      "type": "string",
+      "description": "CSS selector for the submit button. If not provided, will attempt to find a submit button automatically.",
+      "default": "button[type='submit'], input[type='submit'], button:has-text('Submit')",
+      "examples": ["button#submit", "input[type='submit']", "button.submit-btn"]
+    },
+    "wait_for_selector": {
+      "type": "string",
+      "description": "CSS selector to wait for after submission to confirm success. Optional.",
+      "examples": [".success-message", "#confirmation", ".thank-you"]
+    },
+    "timeout": {
+      "type": "integer",
+      "description": "Timeout in milliseconds for page operations",
+      "default": 30000,
+      "minimum": 1000,
+      "maximum": 300000
+    }
+  },
+  "additionalProperties": false
+}

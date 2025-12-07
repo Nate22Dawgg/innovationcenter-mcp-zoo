@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ticker Identifier",
+  "description": "Stock ticker identifier with exchange information",
+  "type": "object",
+  "properties": {
+    "ticker": {
+      "type": "string",
+      "description": "Stock ticker symbol (e.g., 'AAPL', 'MSFT', 'MRNA')",
+      "pattern": "^[A-Z0-9]{1,5}$",
+      "examples": ["AAPL", "MSFT", "MRNA", "PFE"]
+    },
+    "exchange": {
+      "type": ["string", "null"],
+      "description": "Stock exchange where the ticker is listed (e.g., 'NASDAQ', 'NYSE', 'AMEX')",
+      "enum": ["NASDAQ", "NYSE", "AMEX", "OTC", null],
+      "examples": ["NASDAQ", "NYSE"]
+    },
+    "currency": {
+      "type": ["string", "null"],
+      "description": "Currency code (ISO 4217, e.g., 'USD', 'EUR')",
+      "pattern": "^[A-Z]{3}$",
+      "default": "USD",
+      "examples": ["USD", "EUR", "GBP"]
+    },
+    "isin": {
+      "type": ["string", "null"],
+      "description": "International Securities Identification Number (12 characters)",
+      "pattern": "^[A-Z]{2}[A-Z0-9]{10}$",
+      "examples": ["US0378331005", "US5949181045"]
+    },
+    "cusip": {
+      "type": ["string", "null"],
+      "description": "CUSIP identifier (9 characters)",
+      "pattern": "^[A-Z0-9]{9}$",
+      "examples": ["037833100", "594918104"]
+    }
+  },
+  "required": ["ticker"],
+  "additionalProperties": false
+}

@@ -8,9 +8,15 @@ and find IPO filings (S-1 forms).
 import requests
 import time
 import re
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.cache import get_cache, build_cache_key
 
 # SEC EDGAR API base URL
 SEC_BASE_URL = "https://data.sec.gov"
@@ -19,6 +25,9 @@ CIK_LOOKUP_URL = "https://www.sec.gov/cgi-bin/browse-edgar"
 
 # Required User-Agent header (SEC requirement)
 USER_AGENT = "MCP Biotech Markets Server (contact@example.com)"
+
+# Initialize cache
+_cache = get_cache()
 
 
 def _get_headers() -> Dict[str, str]:
@@ -45,6 +54,16 @@ def search_company_cik(company_name: str) -> Optional[str]:
     Returns:
         CIK string (10-digit zero-padded) or None if not found
     """
+    # Check cache first (24 hour TTL for CIK lookups)
+    cache_key = build_cache_key(
+        "biotech-markets-mcp",
+        "search_company_cik",
+        {"company_name": company_name}
+    )
+    cached_result = _cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
     _rate_limit()
     
     try:
@@ -62,8 +81,13 @@ def search_company_cik(company_name: str) -> Optional[str]:
                 if company_name_lower in title or title in company_name_lower:
                     cik = str(ticker_data.get("cik_str", ""))
                     if cik:
-                        return cik.zfill(10)  # Zero-pad to 10 digits
+                        result = cik.zfill(10)  # Zero-pad to 10 digits
+                        # Cache result (24 hours)
+                        _cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
+                        return result
         
+        # Cache None result too (shorter TTL - 1 hour)
+        _cache.set(cache_key, None, ttl_seconds=60 * 60)
         return None
     except Exception as e:
         print(f"Error searching for CIK: {e}")
@@ -101,6 +125,16 @@ def get_filings_by_cik(cik: str, form_type: Optional[str] = None, limit: int = 1
     Returns:
         List of filing dictionaries
     """
+    # Check cache first (12 hour TTL for filings)
+    cache_key = build_cache_key(
+        "biotech-markets-mcp",
+        "get_filings_by_cik",
+        {"cik": cik, "form_type": form_type, "limit": limit}
+    )
+    cached_result = _cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
     _rate_limit()
     
     try:
@@ -139,11 +173,15 @@ def get_filings_by_cik(cik: str, form_type: Optional[str] = None, limit: int = 1
                     "cik": cik
                 })
             
+            # Cache result (12 hours)
+            _cache.set(cache_key, result, ttl_seconds=12 * 60 * 60)
             return result
         except ValueError:
             # If not JSON, parse HTML (simplified)
             # For now, return empty list - full HTML parsing would be complex
-            return []
+            result = []
+            _cache.set(cache_key, result, ttl_seconds=12 * 60 * 60)
+            return result
     except Exception as e:
         print(f"Error getting filings: {e}")
         return []
@@ -160,6 +198,16 @@ def get_filing_content(cik: str, accession_number: str) -> Optional[Dict[str, An
     Returns:
         Dictionary with filing content and metadata
     """
+    # Check cache first (24 hour TTL for filing content)
+    cache_key = build_cache_key(
+        "biotech-markets-mcp",
+        "get_filing_content",
+        {"cik": cik, "accession_number": accession_number}
+    )
+    cached_result = _cache.get(cache_key)
+    if cached_result is not None:
+        return cached_result
+    
     _rate_limit()
     
     # Convert accession number to URL format
@@ -178,13 +226,17 @@ def get_filing_content(cik: str, accession_number: str) -> Optional[Dict[str, An
         
         content = response.text
         
-        return {
+        result = {
             "cik": cik,
             "accession_number": accession_number,
             "content": content[:10000],  # Limit content size
             "content_length": len(content),
             "url": url
         }
+        
+        # Cache result (24 hours)
+        _cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
+        return result
     except Exception as e:
         print(f"Error getting filing content: {e}")
         return None

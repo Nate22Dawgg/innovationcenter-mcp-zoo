@@ -11,6 +11,23 @@ import requests
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import json
+import sys
+from pathlib import Path
+
+# Add common directory to path for error handling
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+try:
+    from common.http import get, CallOptions, call_upstream
+    from common.errors import ApiError, ErrorCode, map_upstream_error
+except ImportError:
+    # Fallback if common module not available
+    get = None
+    CallOptions = None
+    call_upstream = None
+    ApiError = Exception
+    ErrorCode = None
+    map_upstream_error = None
 
 try:
     from .cache import Cache
@@ -37,19 +54,15 @@ class TurquoiseHealthClient:
         if not self.api_key:
             raise ValueError(
                 "Turquoise Health API key is required. "
-                "Set TURQUOISE_API_KEY environment variable or pass api_key parameter."
+                "Set TURQUOISE_API_KEY environment variable or pass api_key parameter. "
+                "This is a required configuration - the service will not function without it."
             )
         
         self.base_url = API_BASE_URL
-        self.session = requests.Session()
-        self.session.headers.update({
+        self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
-        })
-        
-        # Rate limiting
-        self.last_request_time = 0
-        self.min_request_interval = 0.1  # 100ms between requests
+        }
         
         # Caching
         self.use_cache = use_cache
@@ -63,52 +76,115 @@ class TurquoiseHealthClient:
         max_retries: int = 3
     ) -> Dict[str, Any]:
         """
-        Make an HTTP request to the Turquoise Health API with retry logic.
+        Make an HTTP request to the Turquoise Health API using the common HTTP wrapper.
+        
+        This method now uses the standardized HTTP wrapper from common/http.py which provides:
+        - Automatic timeout handling (10s default, fail fast)
+        - Retries with exponential backoff (only for idempotent GET requests)
+        - Circuit breaker per upstream (tracks failure rate for "turquoise")
+        - Standardized error handling
         
         Args:
             method: HTTP method (GET, POST, etc.)
             endpoint: API endpoint path
             params: Query parameters
-            max_retries: Maximum number of retry attempts
+            max_retries: Maximum number of retry attempts (passed to wrapper)
         
         Returns:
             JSON response as dictionary
         
         Raises:
-            Exception: If request fails after retries
+            ApiError: For API errors (handled by common/http wrapper)
         """
+        # Use common HTTP wrapper if available, otherwise fallback to old implementation
+        if get is None or call_upstream is None:
+            # Fallback to old implementation
+            return self._make_request_legacy(method, endpoint, params, max_retries)
+        
         url = f"{self.base_url}{endpoint}"
         
-        # Rate limiting
-        elapsed = time.time() - self.last_request_time
-        if elapsed < self.min_request_interval:
-            time.sleep(self.min_request_interval - elapsed)
+        # Only GET requests are idempotent and allow retries
+        allow_retries = (method.upper() == "GET")
+        
+        try:
+            if method.upper() == "GET":
+                response = get(
+                    url=url,
+                    upstream="turquoise",
+                    timeout=10.0,  # Fail fast with 10s timeout
+                    headers=self.headers,
+                    params=params,
+                    allow_retries=allow_retries,
+                    max_retries=max_retries if allow_retries else 0,
+                )
+            else:
+                # For non-GET requests, use CallOptions directly
+                options = CallOptions(
+                    method=method.upper(),
+                    url=url,
+                    upstream="turquoise",
+                    timeout=10.0,
+                    headers=self.headers,
+                    params=params,
+                    allow_retries=False,  # POST/PUT/DELETE are not idempotent
+                )
+                response = call_upstream(options)
+            
+            return response.json()
+            
+        except ApiError as e:
+            # Re-raise ApiError as-is (already standardized)
+            raise
+        except Exception as e:
+            # Wrap unexpected errors
+            if ApiError and ErrorCode:
+                raise ApiError(
+                    message=f"Unexpected error: {str(e)}",
+                    original_error=e,
+                    code=ErrorCode.INTERNAL_ERROR,
+                )
+            raise
+    
+    def _make_request_legacy(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict[str, Any]] = None,
+        max_retries: int = 3
+    ) -> Dict[str, Any]:
+        """
+        Legacy implementation for when common/http is not available.
+        
+        This is kept as a fallback for backward compatibility.
+        """
+        import requests
+        
+        url = f"{self.base_url}{endpoint}"
+        session = requests.Session()
+        session.headers.update(self.headers)
         
         for attempt in range(max_retries):
             try:
-                response = self.session.request(
+                response = session.request(
                     method=method,
                     url=url,
                     params=params,
                     timeout=30
                 )
-                self.last_request_time = time.time()
                 
-                # Handle rate limiting
                 if response.status_code == 429:
                     retry_after = int(response.headers.get("Retry-After", 60))
                     if attempt < max_retries - 1:
                         time.sleep(retry_after)
                         continue
-                    else:
-                        raise Exception(f"Rate limit exceeded. Retry after {retry_after} seconds.")
+                    raise Exception(f"Rate limit exceeded. Retry after {retry_after} seconds.")
                 
                 response.raise_for_status()
                 return response.json()
                 
             except requests.exceptions.Timeout:
                 if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    time.sleep(2 ** attempt)
                     continue
                 raise Exception("Request timeout after retries")
             
@@ -171,7 +247,13 @@ class TurquoiseHealthClient:
                 self.cache.set("/v1/procedures/search", params, result)
             
             return result
-        except Exception as e:
+        except (ApiError, Exception) as e:
+            # If it's already a structured error, re-raise it
+            if isinstance(e, ApiError):
+                raise
+            # Otherwise, map it to a structured error
+            if map_upstream_error:
+                raise map_upstream_error(e)
             raise Exception(f"Failed to search procedure prices: {str(e)}")
     
     def get_hospital_rates(
@@ -213,7 +295,13 @@ class TurquoiseHealthClient:
                 self.cache.set(f"/v1/hospitals/{hospital_id}/rates", cache_params, result)
             
             return result
-        except Exception as e:
+        except (ApiError, Exception) as e:
+            # If it's already a structured error, re-raise it
+            if isinstance(e, ApiError):
+                raise
+            # Otherwise, map it to a structured error
+            if map_upstream_error:
+                raise map_upstream_error(e)
             raise Exception(f"Failed to get hospital rates: {str(e)}")
     
     def compare_prices(
@@ -265,7 +353,13 @@ class TurquoiseHealthClient:
                 self.cache.set("/v1/procedures/compare", params, result)
             
             return result
-        except Exception as e:
+        except (ApiError, Exception) as e:
+            # If it's already a structured error, re-raise it
+            if isinstance(e, ApiError):
+                raise
+            # Otherwise, map it to a structured error
+            if map_upstream_error:
+                raise map_upstream_error(e)
             raise Exception(f"Failed to compare prices: {str(e)}")
     
     def estimate_cash_price(
@@ -314,7 +408,13 @@ class TurquoiseHealthClient:
                 self.cache.set("/v1/procedures/estimate", params, result)
             
             return result
-        except Exception as e:
+        except (ApiError, Exception) as e:
+            # If it's already a structured error, re-raise it
+            if isinstance(e, ApiError):
+                raise
+            # Otherwise, map it to a structured error
+            if map_upstream_error:
+                raise map_upstream_error(e)
             raise Exception(f"Failed to estimate cash price: {str(e)}")
     
     def _normalize_search_response(self, response: Dict[str, Any], cpt_code: str) -> Dict[str, Any]:

@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Update Tracker Sheet Input",
+  "description": "Input schema for updating tracker sheets (e.g., Google Sheets, Airtable) with idempotency and safety guardrails",
+  "type": "object",
+  "required": ["idempotency_key", "url"],
+  "properties": {
+    "idempotency_key": {
+      "type": "string",
+      "description": "Unique key to ensure idempotency. If the same key is used again with identical parameters, the previous result will be returned without re-executing.",
+      "minLength": 1,
+      "examples": ["tracker-update-2024-01-15-001", "sheet-update-abc123"]
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL of the tracker sheet to update",
+      "examples": ["https://docs.google.com/spreadsheets/d/...", "https://airtable.com/..."]
+    },
+    "dry_run": {
+      "type": "boolean",
+      "default": true,
+      "description": "If true, preview the update without actually modifying the sheet. If false, requires explicit confirmation."
+    },
+    "confirm": {
+      "type": "string",
+      "description": "Confirmation phrase required when dry_run is false. Must equal 'I_understand_this_updates_real_data' to proceed with actual update.",
+      "examples": ["I_understand_this_updates_real_data"]
+    },
+    "row_data": {
+      "type": "object",
+      "description": "Data to update in the sheet. Structure depends on the sheet type.",
+      "additionalProperties": true,
+      "examples": [
+        {
+          "column1": "Value1",
+          "column2": "Value2",
+          "date": "2024-01-15"
+        }
+      ]
+    },
+    "row_selector": {
+      "type": "string",
+      "description": "CSS selector or method to identify the row to update. For Google Sheets, this might be a row number or search criteria.",
+      "examples": ["row-5", "tr:has-text('SearchTerm')", "5"]
+    },
+    "action": {
+      "type": "string",
+      "enum": ["add", "update", "delete"],
+      "default": "update",
+      "description": "Action to perform: add a new row, update existing row, or delete a row"
+    },
+    "timeout": {
+      "type": "integer",
+      "description": "Timeout in milliseconds for page operations",
+      "default": 30000,
+      "minimum": 1000,
+      "maximum": 300000
+    }
+  },
+  "additionalProperties": false
+}

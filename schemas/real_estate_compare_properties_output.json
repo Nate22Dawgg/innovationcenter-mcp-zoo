@@ -1,0 +1,114 @@
+{
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "array",
+      "description": "Array of property comparison data",
+      "items": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "Property address"
+          },
+          "property_id": {
+            "type": "string",
+            "description": "Property identifier"
+          },
+          "estimated_value": {
+            "type": "number",
+            "description": "Estimated property value"
+          },
+          "price_per_sqft": {
+            "type": "number",
+            "description": "Price per square foot"
+          },
+          "estimated_monthly_rent": {
+            "type": "number",
+            "description": "Estimated monthly rental income"
+          },
+          "yield_estimate": {
+            "type": "number",
+            "description": "Estimated yield/cap rate (percentage)"
+          },
+          "irr_estimate": {
+            "type": "number",
+            "description": "Estimated IRR (percentage)"
+          },
+          "tax_amount": {
+            "type": "number",
+            "description": "Annual tax amount"
+          },
+          "red_flags": {
+            "type": "array",
+            "description": "Array of red flags",
+            "items": {
+              "type": "string"
+            }
+          },
+          "property_details": {
+            "type": "object",
+            "properties": {
+              "property_type": {
+                "type": "string"
+              },
+              "square_feet": {
+                "type": "number"
+              },
+              "bedrooms": {
+                "type": "integer"
+              },
+              "bathrooms": {
+                "type": "number"
+              },
+              "year_built": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Summary comparison and recommendation",
+      "properties": {
+        "best_yield": {
+          "type": "string",
+          "description": "Address of property with best yield"
+        },
+        "best_value": {
+          "type": "string",
+          "description": "Address of property with best value (lowest price per sqft)"
+        },
+        "lowest_risk": {
+          "type": "string",
+          "description": "Address of property with lowest risk (fewest red flags)"
+        },
+        "recommendation": {
+          "type": "string",
+          "description": "Summary recommendation or rationale"
+        },
+        "comparison_metrics": {
+          "type": "object",
+          "description": "Aggregated comparison metrics",
+          "properties": {
+            "average_yield": {
+              "type": "number"
+            },
+            "average_price_per_sqft": {
+              "type": "number"
+            },
+            "average_monthly_rent": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if comparison failed"
+    }
+  }
+}

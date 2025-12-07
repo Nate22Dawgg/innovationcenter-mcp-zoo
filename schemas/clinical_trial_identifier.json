@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clinical Trial Identifier",
+  "description": "Clinical trial identifier from ClinicalTrials.gov",
+  "type": "object",
+  "properties": {
+    "nct_id": {
+      "type": "string",
+      "description": "ClinicalTrials.gov identifier (NCT number)",
+      "pattern": "^NCT[0-9]{8}$",
+      "examples": ["NCT01234567", "NCT04567890"]
+    }
+  },
+  "required": ["nct_id"],
+  "additionalProperties": false
+}

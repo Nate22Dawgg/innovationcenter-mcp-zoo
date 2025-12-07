@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Refine Biotech Dossier Input",
+  "description": "Input schema for refining a biotech company dossier",
+  "type": "object",
+  "properties": {
+    "dossier": {
+      "type": ["object", "null"],
+      "description": "Full dossier object to refine (if provided, dossier_id is ignored)",
+      "$ref": "biotech_company_dossier.schema.json"
+    },
+    "dossier_id": {
+      "type": ["string", "null"],
+      "description": "Reference ID of stored dossier artifact (if dossier not provided)"
+    },
+    "new_question": {
+      "type": ["string", "null"],
+      "description": "New question to answer based on the dossier (e.g., 'What are the main risks?')"
+    },
+    "focus_areas": {
+      "type": ["array", "null"],
+      "description": "Specific areas to focus on (e.g., ['pipeline', 'financials', 'risks'])",
+      "items": {
+        "type": "string",
+        "enum": ["pipeline", "financials", "risks", "publications", "trials", "investors"]
+      }
+    }
+  },
+  "anyOf": [
+    {"required": ["dossier"]},
+    {"required": ["dossier_id"]}
+  ],
+  "additionalProperties": false
+}

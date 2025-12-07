@@ -9,12 +9,23 @@ Handles:
 - EDI 835: Remittance advice (payment/denial information)
 - CPT/HCPCS code extraction
 - Line item normalization
+
+Security:
+- All parsed data containing PHI is marked as ephemeral by default
+- PHI should not be persisted beyond request scope
 """
 
 import re
 import json
 from typing import Dict, List, Optional, Any
 from pathlib import Path
+
+try:
+    from common.phi import mark_ephemeral
+except ImportError:
+    # Fallback if common module not available
+    def mark_ephemeral(data: Dict[str, Any], reason: Optional[str] = None) -> Dict[str, Any]:
+        return data
 
 
 # X12 EDI Segment Delimiters
@@ -90,7 +101,7 @@ def parse_edi_837(edi_content: str) -> Dict[str, Any]:
     cpt_codes = extract_cpt_codes({"line_items": line_items})
     hcpcs_codes = extract_hcpcs_codes({"line_items": line_items})
     
-    return {
+    result = {
         "claim_type": "837",
         "transaction_id": transaction_id,
         "submission_date": submission_date,
@@ -103,6 +114,9 @@ def parse_edi_837(edi_content: str) -> Dict[str, Any]:
         "hcpcs_codes": hcpcs_codes,
         "raw_segment_count": len(segments)
     }
+    
+    # Mark as ephemeral since it contains PHI (patient, provider, diagnosis codes, etc.)
+    return mark_ephemeral(result, reason="Contains PHI: patient information, provider details, and medical codes")
 
 
 def parse_edi_835(edi_content: str) -> Dict[str, Any]:
@@ -157,7 +171,7 @@ def parse_edi_835(edi_content: str) -> Dict[str, Any]:
     # Extract summary information
     summary = _extract_835_summary(segments)
     
-    return {
+    result = {
         "remittance_type": "835",
         "transaction_id": transaction_id,
         "payment_date": payment_date,
@@ -167,6 +181,9 @@ def parse_edi_835(edi_content: str) -> Dict[str, Any]:
         "summary": summary,
         "raw_segment_count": len(segments)
     }
+    
+    # Mark as ephemeral since it contains PHI (payer, payee, claim information)
+    return mark_ephemeral(result, reason="Contains PHI: payer/payee information and claim details")
 
 
 def normalize_claim_line_item(line_item: Dict[str, Any]) -> Dict[str, Any]:

@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SEC Identifier",
+  "description": "SEC EDGAR identifier for companies and filings",
+  "type": "object",
+  "properties": {
+    "cik": {
+      "type": "string",
+      "description": "SEC CIK (Central Index Key) - 10-digit zero-padded string",
+      "pattern": "^\\d{10}$",
+      "examples": ["0000320193", "0000789019"]
+    },
+    "accession_number": {
+      "type": ["string", "null"],
+      "description": "SEC filing accession number (e.g., '0000320193-20-000001')",
+      "pattern": "^\\d{10}-\\d{2}-\\d{6}$",
+      "examples": ["0000320193-20-000001", "0000789019-21-000123"]
+    },
+    "company_name": {
+      "type": ["string", "null"],
+      "description": "Company name as registered with SEC",
+      "examples": ["Apple Inc.", "Microsoft Corporation"]
+    }
+  },
+  "required": ["cik"],
+  "additionalProperties": false
+}

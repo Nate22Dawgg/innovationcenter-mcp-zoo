@@ -9,10 +9,18 @@ import json
 import logging
 import sys
 import time
+import uuid
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 from typing import Any, Dict, Optional, Callable
+
+try:
+    from .phi import redact_phi
+except ImportError:
+    # Fallback if phi module not available
+    def redact_phi(payload: Any) -> Any:
+        return payload
 
 # Configure JSON logging formatter
 class JSONFormatter(logging.Formatter):
@@ -36,7 +44,10 @@ class JSONFormatter(logging.Formatter):
             log_data.update(record.extra_fields)
 
         # Add standard fields from record
-        for key in ["server_name", "tool_name", "request_id", "duration_ms", "status_code"]:
+        for key in [
+            "server_name", "tool_name", "request_id", "trace_id", "correlation_id",
+            "duration_ms", "status_code", "upstream", "upstream_error_code"
+        ]:
             if hasattr(record, key):
                 log_data[key] = getattr(record, key)
 
@@ -110,10 +121,24 @@ def get_logger(server_name: str) -> logging.Logger:
     return logger
 
 
+def generate_correlation_id() -> str:
+    """
+    Generate a unique correlation ID for request tracking.
+
+    Returns:
+        UUID string formatted as correlation ID
+    """
+    return str(uuid.uuid4())
+
+
 def log_request(
     logger: logging.Logger,
     tool_name: str,
+    server_name: Optional[str] = None,
     request_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    correlation_id: Optional[str] = None,
+    input_params: Optional[Dict[str, Any]] = None,
     **kwargs,
 ):
     """
@@ -122,16 +147,38 @@ def log_request(
     Args:
         logger: Logger instance
         tool_name: Name of the tool being called
-        request_id: Optional request ID for tracking
+        server_name: Name of the MCP server
+        request_id: Optional request ID for tracking (generated if not provided)
+        trace_id: Optional trace ID for distributed tracing
+        correlation_id: Optional correlation ID (generated if not provided)
+        input_params: Optional input parameters (will be sanitized)
         **kwargs: Additional fields to include in log
     """
+    if correlation_id is None:
+        correlation_id = generate_correlation_id()
+    if request_id is None:
+        request_id = correlation_id
+
     extra = {
         "tool_name": tool_name,
         "event_type": "request_start",
+        "correlation_id": correlation_id,
+        "request_id": request_id,
     }
-    if request_id:
-        extra["request_id"] = request_id
-    extra.update(kwargs)
+    if server_name:
+        extra["server_name"] = server_name
+    if trace_id:
+        extra["trace_id"] = trace_id
+    if input_params:
+        # Sanitize and redact PHI from input params
+        sanitized = _sanitize_params(input_params)
+        extra["input_params"] = redact_phi(sanitized)
+    else:
+        extra["input_params"] = None
+    
+    # Redact PHI from all kwargs
+    redacted_kwargs = redact_phi(kwargs) if kwargs else {}
+    extra.update(redacted_kwargs)
 
     logger.info(f"Tool request: {tool_name}", extra={"extra_fields": extra})
 
@@ -141,7 +188,12 @@ def log_response(
     tool_name: str,
     duration_ms: float,
     status: str = "success",
+    server_name: Optional[str] = None,
     request_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    correlation_id: Optional[str] = None,
+    upstream: Optional[str] = None,
+    upstream_error_code: Optional[str] = None,
     **kwargs,
 ):
     """
@@ -151,8 +203,13 @@ def log_response(
         logger: Logger instance
         tool_name: Name of the tool
         duration_ms: Request duration in milliseconds
-        status: Response status ("success" or "error")
+        status: Response status ("success", "error", "timeout", etc.)
+        server_name: Name of the MCP server
         request_id: Optional request ID for tracking
+        trace_id: Optional trace ID for distributed tracing
+        correlation_id: Optional correlation ID
+        upstream: Optional upstream service name (if error from upstream)
+        upstream_error_code: Optional upstream error code
         **kwargs: Additional fields to include in log
     """
     extra = {
@@ -161,9 +218,25 @@ def log_response(
         "status": status,
         "event_type": "request_complete",
     }
+    if server_name:
+        extra["server_name"] = server_name
     if request_id:
         extra["request_id"] = request_id
-    extra.update(kwargs)
+    if trace_id:
+        extra["trace_id"] = trace_id
+    if correlation_id:
+        extra["correlation_id"] = correlation_id
+    if upstream:
+        extra["upstream"] = upstream
+    if upstream_error_code:
+        extra["upstream_error_code"] = upstream_error_code
+    
+    # Redact PHI from all kwargs before adding to extra
+    redacted_kwargs = redact_phi(kwargs) if kwargs else {}
+    extra.update(redacted_kwargs)
+    
+    # Redact PHI from the entire extra dict
+    extra = redact_phi(extra)
 
     level = logging.INFO if status == "success" else logging.ERROR
     logger.log(level, f"Tool response: {tool_name}", extra={"extra_fields": extra})
@@ -173,7 +246,12 @@ def log_error(
     logger: logging.Logger,
     error: Exception,
     tool_name: Optional[str] = None,
+    server_name: Optional[str] = None,
     request_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    correlation_id: Optional[str] = None,
+    upstream: Optional[str] = None,
+    upstream_error_code: Optional[str] = None,
     **kwargs,
 ):
     """
@@ -183,7 +261,12 @@ def log_error(
         logger: Logger instance
         error: Exception to log
         tool_name: Optional tool name
+        server_name: Name of the MCP server
         request_id: Optional request ID
+        trace_id: Optional trace ID for distributed tracing
+        correlation_id: Optional correlation ID
+        upstream: Optional upstream service name (if error from upstream)
+        upstream_error_code: Optional upstream error code
         **kwargs: Additional fields to include in log
     """
     extra = {
@@ -193,9 +276,25 @@ def log_error(
     }
     if tool_name:
         extra["tool_name"] = tool_name
+    if server_name:
+        extra["server_name"] = server_name
     if request_id:
         extra["request_id"] = request_id
-    extra.update(kwargs)
+    if trace_id:
+        extra["trace_id"] = trace_id
+    if correlation_id:
+        extra["correlation_id"] = correlation_id
+    if upstream:
+        extra["upstream"] = upstream
+    if upstream_error_code:
+        extra["upstream_error_code"] = upstream_error_code
+    
+    # Redact PHI from all kwargs
+    redacted_kwargs = redact_phi(kwargs) if kwargs else {}
+    extra.update(redacted_kwargs)
+    
+    # Redact PHI from the entire extra dict
+    extra = redact_phi(extra)
 
     logger.error(f"Error in {tool_name or 'unknown'}: {error}", extra={"extra_fields": extra}, exc_info=True)
 
@@ -204,47 +303,91 @@ def log_error(
 def request_context(
     logger: logging.Logger,
     tool_name: str,
+    server_name: Optional[str] = None,
     request_id: Optional[str] = None,
+    trace_id: Optional[str] = None,
+    correlation_id: Optional[str] = None,
     log_input: bool = True,
     **input_params,
 ):
     """
-    Context manager for tracking request execution.
+    Context manager for tracking request execution with full observability.
 
     Args:
         logger: Logger instance
         tool_name: Name of the tool
-        request_id: Optional request ID
+        server_name: Name of the MCP server
+        request_id: Optional request ID (generated if not provided)
+        trace_id: Optional trace ID for distributed tracing
+        correlation_id: Optional correlation ID (generated if not provided)
         log_input: Whether to log input parameters
         **input_params: Input parameters to log
 
     Yields:
-        Context dictionary with request metadata
+        Context dictionary with request metadata including correlation_id, trace_id, etc.
     """
+    if correlation_id is None:
+        correlation_id = generate_correlation_id()
+    if request_id is None:
+        request_id = correlation_id
+
     start_time = time.time()
     context = {
         "tool_name": tool_name,
+        "server_name": server_name,
         "request_id": request_id,
+        "correlation_id": correlation_id,
+        "trace_id": trace_id,
         "start_time": start_time,
     }
 
     if log_input and input_params:
-        # Sanitize input for logging (remove sensitive data)
+        # Sanitize input for logging (remove sensitive data and PHI)
         sanitized_params = _sanitize_params(input_params)
-        log_request(logger, tool_name, request_id, input_params=sanitized_params)
+        # Apply PHI redaction after sanitization
+        sanitized_params = redact_phi(sanitized_params)
+        log_request(
+            logger, tool_name, server_name=server_name,
+            request_id=request_id, trace_id=trace_id, correlation_id=correlation_id,
+            input_params=sanitized_params
+        )
     else:
-        log_request(logger, tool_name, request_id)
+        log_request(
+            logger, tool_name, server_name=server_name,
+            request_id=request_id, trace_id=trace_id, correlation_id=correlation_id
+        )
 
     try:
         yield context
         duration_ms = (time.time() - start_time) * 1000
-        log_response(logger, tool_name, duration_ms, "success", request_id)
+        log_response(
+            logger, tool_name, duration_ms, "success",
+            server_name=server_name, request_id=request_id,
+            trace_id=trace_id, correlation_id=correlation_id
+        )
         context["duration_ms"] = duration_ms
         context["status"] = "success"
     except Exception as e:
         duration_ms = (time.time() - start_time) * 1000
-        log_error(logger, e, tool_name, request_id)
-        log_response(logger, tool_name, duration_ms, "error", request_id, error=str(e))
+        # Extract upstream error info if it's an ApiError
+        upstream = None
+        upstream_error_code = None
+        if hasattr(e, "details") and isinstance(e.details, dict):
+            upstream = e.details.get("upstream")
+            upstream_error_code = e.details.get("status_code") or e.details.get("error_code")
+        
+        log_error(
+            logger, e, tool_name, server_name=server_name,
+            request_id=request_id, trace_id=trace_id, correlation_id=correlation_id,
+            upstream=upstream, upstream_error_code=str(upstream_error_code) if upstream_error_code else None
+        )
+        log_response(
+            logger, tool_name, duration_ms, "error",
+            server_name=server_name, request_id=request_id,
+            trace_id=trace_id, correlation_id=correlation_id,
+            upstream=upstream, upstream_error_code=str(upstream_error_code) if upstream_error_code else None,
+            error=str(e)
+        )
         context["duration_ms"] = duration_ms
         context["status"] = "error"
         context["error"] = str(e)
