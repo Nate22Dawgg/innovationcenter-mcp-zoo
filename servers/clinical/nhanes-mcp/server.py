@@ -17,6 +17,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 # Add current directory to path for importing modules
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Import configuration
+from config import load_config, NhanesConfig
+from common.config import validate_config_or_raise, ConfigValidationError
+
+# Import DCAP for tool discovery (https://github.com/boorich/dcap)
+from common.dcap import (
+    register_tools_with_dcap,
+    ToolMetadata,
+    ToolSignature,
+    DCAP_ENABLED,
+)
+
 # Import NHANES modules
 from nhanes_query_engine import (
     list_datasets,
@@ -39,9 +51,8 @@ except ImportError:
     print("Warning: MCP SDK not found. Install with: pip install mcp", file=sys.stderr)
 
 
-# Paths
-DATA_DIR = Path(__file__).parent / "data"
-CONFIG_PATH = Path(__file__).parent / "config" / "datasets.json"
+# Configuration will be loaded at startup
+_config: Optional[NhanesConfig] = None
 
 
 # Load schemas
@@ -55,6 +66,14 @@ def load_schema(schema_path: str) -> Dict[str, Any]:
 
 
 # Tool implementations
+def get_config() -> NhanesConfig:
+    """Get or load configuration."""
+    global _config
+    if _config is None:
+        _config = load_config()
+    return _config
+
+
 async def nhanes_list_datasets(
     cycle: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -70,8 +89,11 @@ async def nhanes_list_datasets(
     try:
         from nhanes_data_loader import get_available_cycles
         
+        config = get_config()
+        config_path = Path(config.config_path) if config.config_path else Path(__file__).parent / "config" / "datasets.json"
+        
         if cycle:
-            datasets = list_datasets(cycle, CONFIG_PATH)
+            datasets = list_datasets(cycle, config_path)
             return {
                 "cycle": cycle,
                 "datasets": datasets,
@@ -82,7 +104,7 @@ async def nhanes_list_datasets(
             cycles = get_available_cycles()
             all_datasets = {}
             for c in cycles:
-                datasets = list_datasets(c, CONFIG_PATH)
+                datasets = list_datasets(c, config_path)
                 all_datasets[c] = {
                     "datasets": datasets,
                     "count": len(datasets)
@@ -118,14 +140,18 @@ async def nhanes_get_data(
         Dictionary with query results
     """
     try:
+        config = get_config()
+        data_dir = Path(config.data_directory) if config.data_directory else Path(__file__).parent / "data"
+        config_path = Path(config.config_path) if config.config_path else Path(__file__).parent / "config" / "datasets.json"
+        
         result = query_data(
             dataset,
             cycle,
             filters=filters,
             variables=variables,
             limit=limit,
-            data_dir=DATA_DIR,
-            config_path=CONFIG_PATH
+            data_dir=data_dir,
+            config_path=config_path
         )
         return result
     except Exception as e:
@@ -153,12 +179,16 @@ async def nhanes_get_variable_info(
         Dictionary with variable information and statistics
     """
     try:
+        config = get_config()
+        data_dir = Path(config.data_directory) if config.data_directory else Path(__file__).parent / "data"
+        config_path = Path(config.config_path) if config.config_path else Path(__file__).parent / "config" / "datasets.json"
+        
         result = get_variable_info(
             dataset,
             variable,
             cycle,
-            data_dir=DATA_DIR,
-            config_path=CONFIG_PATH
+            data_dir=data_dir,
+            config_path=config_path
         )
         return result
     except Exception as e:
@@ -191,14 +221,18 @@ async def nhanes_calculate_percentile(
         Dictionary with percentile rank and statistics
     """
     try:
+        config = get_config()
+        data_dir = Path(config.data_directory) if config.data_directory else Path(__file__).parent / "data"
+        config_path = Path(config.config_path) if config.config_path else Path(__file__).parent / "config" / "datasets.json"
+        
         result = calculate_percentile(
             variable,
             value,
             dataset,
             cycle,
             filters=filters,
-            data_dir=DATA_DIR,
-            config_path=CONFIG_PATH
+            data_dir=data_dir,
+            config_path=config_path
         )
         return result
     except Exception as e:
@@ -224,10 +258,14 @@ async def nhanes_get_demographics_summary(
         Dictionary with demographics summary statistics
     """
     try:
+        config = get_config()
+        data_dir = Path(config.data_directory) if config.data_directory else Path(__file__).parent / "data"
+        config_path = Path(config.config_path) if config.config_path else Path(__file__).parent / "config" / "datasets.json"
+        
         result = get_demographics_summary(
             cycle,
-            data_dir=DATA_DIR,
-            config_path=CONFIG_PATH
+            data_dir=data_dir,
+            config_path=config_path
         )
         return result
     except Exception as e:
@@ -308,8 +346,59 @@ if MCP_AVAILABLE:
                 text=json.dumps({"error": str(e)}, indent=2)
             )]
     
+    # DCAP v3.1 Tool Metadata for semantic discovery
+    DCAP_TOOLS = [
+        ToolMetadata(
+            name="nhanes_list_datasets",
+            description="List available NHANES datasets for a cycle",
+            triggers=["NHANES datasets", "health survey data", "CDC data", "available datasets"],
+            signature=ToolSignature(input="CycleQuery", output="Maybe<DatasetList>", cost=0)
+        ),
+        ToolMetadata(
+            name="nhanes_get_data",
+            description="Query NHANES data with optional filters and variable selection",
+            triggers=["NHANES query", "health survey", "nutrition data", "examination data"],
+            signature=ToolSignature(input="DataQuery", output="Maybe<DataResult>", cost=0)
+        ),
+        ToolMetadata(
+            name="nhanes_get_variable_info",
+            description="Get information about a specific variable in a dataset",
+            triggers=["variable info", "NHANES variable", "data dictionary"],
+            signature=ToolSignature(input="VariableQuery", output="Maybe<VariableInfo>", cost=0)
+        ),
+        ToolMetadata(
+            name="nhanes_calculate_percentile",
+            description="Calculate percentile rank of a value for a variable",
+            triggers=["percentile", "population comparison", "health metrics percentile"],
+            signature=ToolSignature(input="PercentileQuery", output="Maybe<PercentileResult>", cost=0)
+        ),
+        ToolMetadata(
+            name="nhanes_get_demographics_summary",
+            description="Get summary statistics for demographics data",
+            triggers=["demographics", "population summary", "NHANES demographics"],
+            signature=ToolSignature(input="Cycle", output="Maybe<DemographicsSummary>", cost=0)
+        ),
+    ]
+
     async def main():
         """Run the MCP server."""
+        # Load and validate configuration (fail-fast by default)
+        try:
+            config = load_config()
+            validate_config_or_raise(config, fail_fast=True)
+        except ConfigValidationError as e:
+            print(f"Configuration validation failed: {e}", file=sys.stderr)
+            sys.exit(1)
+        
+        # Register tools with DCAP for dynamic discovery
+        if DCAP_ENABLED:
+            registered = register_tools_with_dcap(
+                server_id="nhanes-mcp",
+                tools=DCAP_TOOLS,
+                base_command="python servers/clinical/nhanes-mcp/server.py"
+            )
+            print(f"DCAP: Registered {registered} tools with relay", file=sys.stderr)
+        
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,

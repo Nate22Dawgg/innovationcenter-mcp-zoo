@@ -48,7 +48,7 @@ class ErrorCode(str, Enum):
 
     # Validation Errors
     VALIDATION_ERROR = "VALIDATION_ERROR"
-    BAD_REQUEST = "BAD_REQUEST"
+    # BAD_REQUEST already defined above in primary error codes
     INVALID_INPUT = "INVALID_INPUT"
     MISSING_REQUIRED_FIELD = "MISSING_REQUIRED_FIELD"
 

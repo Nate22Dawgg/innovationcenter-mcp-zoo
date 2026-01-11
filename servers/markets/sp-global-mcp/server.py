@@ -22,7 +22,20 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
+
+# Import configuration
+from config import load_config, SPGlobalConfig
+from common.config import validate_config_or_raise, ConfigValidationError
+
+# Import DCAP for tool discovery (https://github.com/boorich/dcap)
+from common.dcap import (
+    register_tools_with_dcap,
+    ToolMetadata,
+    ToolSignature,
+    DCAP_ENABLED,
+)
 
 # Try to import MCP SDK - fallback to basic implementation if not available
 try:
@@ -35,12 +48,38 @@ except ImportError:
     MCP_AVAILABLE = False
     print("Warning: MCP SDK not found. Install with: pip install mcp", file=sys.stderr)
 
+# Import standardized error handling
+try:
+    from common.errors import (
+        McpError,
+        map_upstream_error,
+        format_error_response,
+        ErrorCode,
+    )
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError:
+    ERROR_HANDLING_AVAILABLE = False
+    McpError = Exception
+    map_upstream_error = None
+    format_error_response = None
+    ErrorCode = None
+
 # Import S&P Global API client
 from sp_global_client import SPGlobalClient
 
 
-# Initialize S&P Global client
+# Initialize configuration and client
+_config: Optional[SPGlobalConfig] = None
+_config_error_payload: Optional[Dict[str, Any]] = None
 _client: Optional[SPGlobalClient] = None
+
+
+def get_config() -> SPGlobalConfig:
+    """Get or load configuration."""
+    global _config
+    if _config is None:
+        _config = load_config()
+    return _config
 
 
 def get_client() -> SPGlobalClient:
@@ -48,20 +87,43 @@ def get_client() -> SPGlobalClient:
     Get or create S&P Global API client.
     
     Raises:
-        ValueError: If SP_GLOBAL_API_KEY is not set (fail-closed behavior)
+        McpError: If configuration is invalid (SERVICE_NOT_CONFIGURED)
     """
-    global _client
+    global _client, _config_error_payload
+    
+    # Check for configuration errors first
+    if _config_error_payload:
+        error = McpError(
+            code=ErrorCode.SERVICE_NOT_CONFIGURED,
+            message="Service configuration is incomplete or invalid.",
+            details=_config_error_payload.get("issues", [])
+        ) if ERROR_HANDLING_AVAILABLE and ErrorCode else None
+        if error:
+            raise error
+        raise ValueError("Service configuration is incomplete or invalid.")
+    
     if _client is None:
-        # Fail-closed: explicitly check for API key before creating client
-        api_key = os.getenv("SP_GLOBAL_API_KEY")
-        if not api_key:
+        config = get_config()
+        # Use config's API key
+        if not config.sp_global_api_key:
+            error = McpError(
+                code=ErrorCode.SERVICE_NOT_CONFIGURED,
+                message="SP_GLOBAL_API_KEY is required for this service. The service cannot function without this key.",
+                details=[{
+                    "field": "SP_GLOBAL_API_KEY",
+                    "message": "SP_GLOBAL_API_KEY is required. Contact S&P Global Market Intelligence support for API access.",
+                    "critical": True
+                }]
+            ) if ERROR_HANDLING_AVAILABLE and ErrorCode else None
+            if error:
+                raise error
             raise ValueError(
                 "SP_GLOBAL_API_KEY environment variable is required. "
-                "This is a required configuration - the service will not function without it. "
+                "The service cannot function without this key. "
                 "Please set SP_GLOBAL_API_KEY in your environment or configuration. "
                 "Contact S&P Global Market Intelligence support for API access."
             )
-        _client = SPGlobalClient(api_key=api_key)
+        _client = SPGlobalClient(api_key=config.sp_global_api_key)
     return _client
 
 
@@ -94,8 +156,16 @@ async def sp_global_search_companies(
         )
         return result
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "count": 0,
             "companies": []
         }
@@ -132,8 +202,16 @@ async def sp_global_get_fundamentals(
         )
         return result
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "company_id": company_id,
             "fundamentals": {}
         }
@@ -167,8 +245,16 @@ async def sp_global_get_earnings_transcripts(
         )
         return result
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "company_id": company_id,
             "transcripts": []
         }
@@ -191,8 +277,16 @@ async def sp_global_get_company_profile(
         result = client.get_company_profile(company_id=company_id)
         return result
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "company_id": company_id,
             "profile": {}
         }
@@ -349,8 +443,59 @@ if MCP_AVAILABLE:
                 text=json.dumps({"error": str(e)}, indent=2)
             )]
     
+    # DCAP v3.1 Tool Metadata for semantic discovery
+    DCAP_TOOLS = [
+        ToolMetadata(
+            name="sp_global_search_companies",
+            description="Search for companies using S&P Capital IQ by name, ticker, or CIQ ID",
+            triggers=["S&P Capital IQ", "company search", "CIQ", "financial data"],
+            signature=ToolSignature(input="Query", output="Maybe<CompanyList>", cost=0)
+        ),
+        ToolMetadata(
+            name="sp_global_get_fundamentals",
+            description="Get company fundamentals from S&P Capital IQ (financials, ratios, metrics)",
+            triggers=["fundamentals", "financial statements", "S&P data", "company metrics"],
+            signature=ToolSignature(input="CompanyQuery", output="Maybe<Fundamentals>", cost=0)
+        ),
+        ToolMetadata(
+            name="sp_global_get_earnings_transcripts",
+            description="Get earnings call transcripts for a company from S&P Capital IQ",
+            triggers=["earnings call", "transcript", "earnings transcript", "investor call"],
+            signature=ToolSignature(input="CompanyQuery", output="Maybe<TranscriptList>", cost=0)
+        ),
+        ToolMetadata(
+            name="sp_global_get_company_profile",
+            description="Get comprehensive company profile from S&P Capital IQ",
+            triggers=["company profile", "S&P profile", "CIQ profile", "company information"],
+            signature=ToolSignature(input="CompanyID", output="Maybe<CompanyProfile>", cost=0)
+        ),
+    ]
+
     async def main():
         """Run the MCP server."""
+        global _config_error_payload
+        
+        # Load and validate configuration (fail-soft for this service)
+        try:
+            config = load_config()
+            is_valid, error_payload = validate_config_or_raise(config, fail_fast=False)
+            if not is_valid:
+                _config_error_payload = error_payload
+                print(f"Warning: Configuration validation found issues. Service will start but tools may return SERVICE_NOT_CONFIGURED errors.", file=sys.stderr)
+        except ConfigValidationError as e:
+            # This shouldn't happen with fail_fast=False, but handle it just in case
+            print(f"Configuration validation failed: {e}", file=sys.stderr)
+            sys.exit(1)
+        
+        # Register tools with DCAP for dynamic discovery
+        if DCAP_ENABLED:
+            registered = register_tools_with_dcap(
+                server_id="sp-global-mcp",
+                tools=DCAP_TOOLS,
+                base_command="python servers/markets/sp-global-mcp/server.py"
+            )
+            print(f"DCAP: Registered {registered} tools with relay", file=sys.stderr)
+        
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,

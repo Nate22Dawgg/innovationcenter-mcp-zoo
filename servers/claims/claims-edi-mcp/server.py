@@ -38,6 +38,19 @@ from cms_fee_schedules import (
 from config import load_config, ClaimsEdiConfig
 from common.config import validate_config_or_raise, ConfigValidationError
 
+# Import DCAP for tool discovery (https://github.com/boorich/dcap)
+try:
+    from common.dcap import (
+        register_tools_with_dcap,
+        ToolMetadata,
+        ToolSignature,
+        DCAP_ENABLED,
+    )
+    DCAP_AVAILABLE = True
+except ImportError:
+    DCAP_AVAILABLE = False
+    DCAP_ENABLED = False
+
 # Import common utilities for logging and PHI handling
 try:
     from common.logging import get_logger, request_context
@@ -984,8 +997,51 @@ if MCP_AVAILABLE:
                 text=json.dumps(error_response, indent=2)
             )]
     
+    # DCAP v3.1 Tool Metadata for semantic discovery
+    DCAP_TOOLS = [
+        ToolMetadata(
+            name="claims_parse_edi_837",
+            description="Parse EDI 837 Professional Claims file",
+            triggers=["EDI 837", "professional claim", "parse claim", "health claim"],
+            signature=ToolSignature(input="EDIFile", output="Maybe<ClaimData>", cost=0)
+        ),
+        ToolMetadata(
+            name="claims_parse_edi_835",
+            description="Parse EDI 835 Remittance Advice file",
+            triggers=["EDI 835", "remittance advice", "payment explanation", "ERA"],
+            signature=ToolSignature(input="EDIFile", output="Maybe<RemittanceData>", cost=0)
+        ),
+        ToolMetadata(
+            name="claims_normalize_line_item",
+            description="Normalize claim line item for consistent formatting",
+            triggers=["normalize claim", "claim line item", "standardize claim"],
+            signature=ToolSignature(input="LineItem", output="Maybe<NormalizedItem>", cost=0)
+        ),
+        ToolMetadata(
+            name="claims_lookup_cpt_price",
+            description="Look up CPT code in CMS fee schedules",
+            triggers=["CPT lookup", "CPT price", "procedure price", "CMS fee"],
+            signature=ToolSignature(input="CPTCode", output="Maybe<CPTPrice>", cost=0)
+        ),
+        ToolMetadata(
+            name="claims_lookup_hcpcs_price",
+            description="Look up HCPCS code in CMS fee schedules",
+            triggers=["HCPCS lookup", "HCPCS price", "supply price", "DME price"],
+            signature=ToolSignature(input="HCPCSCode", output="Maybe<HCPCSPrice>", cost=0)
+        ),
+    ] if DCAP_AVAILABLE else []
+
     async def main():
         """Run the MCP server."""
+        # Register tools with DCAP for dynamic discovery
+        if DCAP_AVAILABLE and DCAP_ENABLED:
+            registered = register_tools_with_dcap(
+                server_id="claims-edi-mcp",
+                tools=DCAP_TOOLS,
+                base_command="python servers/claims/claims-edi-mcp/server.py"
+            )
+            print(f"DCAP: Registered {registered} tools with relay", file=sys.stderr)
+        
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,

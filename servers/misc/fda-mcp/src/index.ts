@@ -36,6 +36,9 @@ import {
   handleSearchDeviceRecalls
 } from './handlers/device-handlers.js';
 
+// Import DCAP for tool discovery (https://github.com/boorich/dcap)
+import { registerToolsWithDCAP, DCAP_ENABLED, type ToolMetadata } from './utils/dcap.js';
+
 /**
  * FDA MCP Server
  */
@@ -655,6 +658,75 @@ class FDAServer {
   }
 
   async run() {
+    // Register tools with DCAP for dynamic discovery
+    if (DCAP_ENABLED) {
+      const dcapTools: ToolMetadata[] = [
+        {
+          name: 'search_drug_adverse_events',
+          description: 'Search FDA drug adverse event reports (FAERS)',
+          triggers: ['drug adverse events', 'FAERS', 'drug side effects', 'drug safety'],
+          signature: { input: 'DrugQuery', output: 'Maybe<AdverseEventList>', cost: 0 }
+        },
+        {
+          name: 'search_drug_labels',
+          description: 'Search FDA drug product labeling information',
+          triggers: ['drug labels', 'drug labeling', 'drug information', 'prescribing info'],
+          signature: { input: 'DrugQuery', output: 'Maybe<LabelList>', cost: 0 }
+        },
+        {
+          name: 'search_drug_ndc',
+          description: 'Search National Drug Code (NDC) directory',
+          triggers: ['NDC', 'drug code', 'national drug code', 'drug identifier'],
+          signature: { input: 'NDCQuery', output: 'Maybe<NDCList>', cost: 0 }
+        },
+        {
+          name: 'search_drug_recalls',
+          description: 'Search drug recall enforcement reports',
+          triggers: ['drug recalls', 'FDA recall', 'drug withdrawal', 'medication recall'],
+          signature: { input: 'RecallQuery', output: 'Maybe<RecallList>', cost: 0 }
+        },
+        {
+          name: 'search_drugs_fda',
+          description: 'Search Drugs@FDA database for approved drug products',
+          triggers: ['FDA approved drugs', 'drug approvals', 'NDA', 'ANDA'],
+          signature: { input: 'DrugQuery', output: 'Maybe<ApprovedDrugList>', cost: 0 }
+        },
+        {
+          name: 'search_drug_shortages',
+          description: 'Search current drug shortages reported to FDA',
+          triggers: ['drug shortages', 'medication shortage', 'drug supply'],
+          signature: { input: 'ShortageQuery', output: 'Maybe<ShortageList>', cost: 0 }
+        },
+        {
+          name: 'search_device_510k',
+          description: 'Search FDA 510(k) device clearances',
+          triggers: ['510k', 'device clearance', 'medical device FDA', 'premarket notification'],
+          signature: { input: 'DeviceQuery', output: 'Maybe<ClearanceList>', cost: 0 }
+        },
+        {
+          name: 'search_device_classifications',
+          description: 'Search FDA device classifications',
+          triggers: ['device classification', 'medical device class', 'device category'],
+          signature: { input: 'ClassQuery', output: 'Maybe<ClassificationList>', cost: 0 }
+        },
+        {
+          name: 'search_device_adverse_events',
+          description: 'Search FDA device adverse events (MDR)',
+          triggers: ['device adverse events', 'MDR', 'device malfunction', 'device safety'],
+          signature: { input: 'DeviceQuery', output: 'Maybe<DeviceEventList>', cost: 0 }
+        },
+        {
+          name: 'search_device_recalls',
+          description: 'Search FDA device recall enforcement reports',
+          triggers: ['device recalls', 'medical device recall', 'device withdrawal'],
+          signature: { input: 'RecallQuery', output: 'Maybe<DeviceRecallList>', cost: 0 }
+        }
+      ];
+      
+      const registered = registerToolsWithDCAP('fda-mcp', dcapTools);
+      console.error(`DCAP: Registered ${registered} tools with relay`);
+    }
+    
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('FDA API MCP Server running on stdio');

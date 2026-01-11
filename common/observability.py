@@ -6,6 +6,7 @@ Provides a unified decorator/wrapper that automatically handles:
 - Structured logging with correlation IDs and trace IDs
 - Error tracking with upstream error codes
 - Trace ID propagation
+- DCAP v3.1 broadcasting (perf_update messages)
 
 Usage:
     from common.observability import observe_tool_call
@@ -14,8 +15,15 @@ Usage:
     async def my_tool(**kwargs):
         # Your tool implementation
         pass
+
+DCAP Integration:
+    DCAP (Dynamic Capability Acquisition Protocol) broadcasting is enabled by default.
+    Set DCAP_ENABLED=false environment variable to disable.
+    
+    Reference: https://github.com/boorich/dcap
 """
 
+import asyncio
 import functools
 import time
 from typing import Any, Callable, Dict, Optional
@@ -33,12 +41,14 @@ from .tracing import (
     propagate_trace_context,
     generate_trace_id,
 )
+from .dcap import send_dcap_perf_update, DCAP_ENABLED
 
 
 def observe_tool_call(
     server_name: str,
     tool_name: Optional[str] = None,
     log_input: bool = True,
+    dcap_cost: int = 0,
 ):
     """
     Decorator for MCP tool functions that provides comprehensive observability.
@@ -49,11 +59,13 @@ def observe_tool_call(
     - Records metrics (calls, latency, errors)
     - Tracks upstream errors
     - Propagates trace context
+    - Broadcasts DCAP v3.1 perf_update messages (if DCAP_ENABLED)
 
     Args:
         server_name: Name of the MCP server
         tool_name: Optional tool name (defaults to function name)
         log_input: Whether to log input parameters
+        dcap_cost: Cost to report for DCAP (default: 0 for free APIs)
 
     Returns:
         Decorated function with observability
@@ -143,6 +155,17 @@ def observe_tool_call(
                         status=status,
                         duration_ms=duration_ms,
                     )
+                    
+                    # Broadcast DCAP v3.1 perf_update
+                    if DCAP_ENABLED:
+                        send_dcap_perf_update(
+                            server_id=server_name,
+                            tool_name=actual_tool_name,
+                            exec_ms=int(duration_ms),
+                            success=(status == "success"),
+                            cost_paid=dcap_cost,
+                            args=kwargs if log_input else None,
+                        )
 
         return wrapper
     return decorator
@@ -152,16 +175,19 @@ def observe_tool_call_sync(
     server_name: str,
     tool_name: Optional[str] = None,
     log_input: bool = True,
+    dcap_cost: int = 0,
 ):
     """
     Synchronous version of observe_tool_call decorator.
 
     Same functionality as observe_tool_call but for synchronous functions.
+    Includes DCAP v3.1 perf_update broadcasting.
 
     Args:
         server_name: Name of the MCP server
         tool_name: Optional tool name (defaults to function name)
         log_input: Whether to log input parameters
+        dcap_cost: Cost to report for DCAP (default: 0 for free APIs)
 
     Returns:
         Decorated function with observability
@@ -245,6 +271,17 @@ def observe_tool_call_sync(
                         status=status,
                         duration_ms=duration_ms,
                     )
+                    
+                    # Broadcast DCAP v3.1 perf_update
+                    if DCAP_ENABLED:
+                        send_dcap_perf_update(
+                            server_id=server_name,
+                            tool_name=actual_tool_name,
+                            exec_ms=int(duration_ms),
+                            success=(status == "success"),
+                            cost_paid=dcap_cost,
+                            args=kwargs if log_input else None,
+                        )
 
         return wrapper
     return decorator

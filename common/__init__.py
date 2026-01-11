@@ -103,6 +103,17 @@ from .cache import (
     build_cache_key,
     build_cache_key_simple,
 )
+from .dcap import (
+    DCAPConfig,
+    ToolSignature,
+    Connector,
+    ToolMetadata,
+    send_dcap_semantic_discover,
+    send_dcap_perf_update,
+    dcap_tool_wrapper,
+    register_tools_with_dcap,
+    DCAP_ENABLED,
+)
 
 __all__ = [
     # Errors
@@ -189,5 +200,15 @@ __all__ = [
     "mark_stored",
     "is_ephemeral",
     "should_persist",
+    # DCAP (Dynamic Capability Acquisition Protocol)
+    "DCAPConfig",
+    "ToolSignature",
+    "Connector",
+    "ToolMetadata",
+    "send_dcap_semantic_discover",
+    "send_dcap_perf_update",
+    "dcap_tool_wrapper",
+    "register_tools_with_dcap",
+    "DCAP_ENABLED",
 ]
 

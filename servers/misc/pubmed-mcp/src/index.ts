@@ -30,6 +30,9 @@ import { initializeAndStartServer } from "./mcp-server/server.js";
 import { requestContextService } from "./utils/index.js";
 import { logger, McpLogLevel } from "./utils/internal/logger.js";
 
+// Import DCAP for tool discovery (https://github.com/boorich/dcap)
+import { registerToolsWithDCAP, DCAP_ENABLED, type ToolMetadata } from "./utils/dcap/index.js";
+
 /**
  * Holds the main MCP server instance, primarily for STDIO transport.
  * @private
@@ -199,6 +202,39 @@ const start = async (): Promise<void> => {
         "HTTP transport initialized, but no http.Server instance was returned to index.ts. Shutdown might be incomplete.",
         startupContext,
       );
+    }
+
+    // Register tools with DCAP for dynamic discovery
+    if (DCAP_ENABLED) {
+      const dcapTools: ToolMetadata[] = [
+        {
+          name: 'pubmed_search_articles',
+          description: 'Search PubMed for articles using query terms and filters',
+          triggers: ['PubMed search', 'medical literature', 'research articles', 'scientific papers'],
+          signature: { input: 'SearchQuery', output: 'Maybe<ArticleList>', cost: 0 }
+        },
+        {
+          name: 'pubmed_research_agent',
+          description: 'Advanced research agent for comprehensive PubMed literature analysis',
+          triggers: ['research agent', 'literature review', 'systematic search', 'medical research'],
+          signature: { input: 'ResearchQuery', output: 'Maybe<ResearchPlan>', cost: 0 }
+        },
+        {
+          name: 'pubmed_fetch_article_details',
+          description: 'Fetch detailed information for specific PubMed articles by PMID',
+          triggers: ['fetch article', 'PMID lookup', 'article details', 'full text'],
+          signature: { input: 'PMIDList', output: 'Maybe<ArticleDetails>', cost: 0 }
+        },
+        {
+          name: 'pubmed_citation_network',
+          description: 'Analyze citation network for PubMed articles',
+          triggers: ['citation network', 'cited by', 'references', 'citation analysis'],
+          signature: { input: 'PMIDList', output: 'Maybe<CitationNetwork>', cost: 0 }
+        }
+      ];
+      
+      const registered = registerToolsWithDCAP('pubmed-mcp', dcapTools);
+      logger.info(`DCAP: Registered ${registered} tools with relay`, startupContext);
     }
 
     logger.info(

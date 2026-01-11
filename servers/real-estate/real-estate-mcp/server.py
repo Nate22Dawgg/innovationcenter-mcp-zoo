@@ -22,12 +22,20 @@ from typing import Any, Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from data_source_router import DataSourceRouter
-from cache import Cache
+from common.cache import get_cache
 from config import load_config, RealEstateConfig
 from common.config import validate_config_or_raise, ConfigValidationError
 from common.errors import ErrorCode
 from common.logging import get_logger
 from investment_analysis import generate_property_investment_brief, compare_properties
+
+# Import DCAP for tool discovery (https://github.com/boorich/dcap)
+from common.dcap import (
+    register_tools_with_dcap,
+    ToolMetadata,
+    ToolSignature,
+    DCAP_ENABLED,
+)
 
 logger = get_logger(__name__)
 
@@ -54,7 +62,7 @@ def load_schema(schema_path: str) -> Dict[str, Any]:
 
 
 # Initialize router and cache
-_cache: Optional[Cache] = None
+_cache = None
 _router: Optional[DataSourceRouter] = None
 _config: Optional[RealEstateConfig] = None
 _config_error_payload: Optional[Dict[str, Any]] = None
@@ -74,7 +82,7 @@ def get_router() -> DataSourceRouter:
     if _router is None:
         global _cache
         if _cache is None:
-            _cache = Cache()
+            _cache = get_cache()
         _router = DataSourceRouter(cache=_cache)
     return _router
 
@@ -541,8 +549,69 @@ if MCP_AVAILABLE:
                 text=json.dumps({"error": str(e)}, indent=2)
             )]
     
+    # DCAP v3.1 Tool Metadata for semantic discovery
+    DCAP_TOOLS = [
+        ToolMetadata(
+            name="real_estate_property_lookup",
+            description="Get comprehensive property information from multiple data sources",
+            triggers=["property lookup", "property info", "real estate data", "property details"],
+            signature=ToolSignature(input="AddressQuery", output="Maybe<PropertyInfo>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_address_enrichment",
+            description="Enrich partial address with complete address information",
+            triggers=["address enrichment", "address lookup", "complete address"],
+            signature=ToolSignature(input="PartialAddress", output="Maybe<AddressInfo>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_get_tax_records",
+            description="Get property tax assessment records from county assessor",
+            triggers=["tax records", "property tax", "assessment records", "tax value"],
+            signature=ToolSignature(input="PropertyRef", output="Maybe<TaxRecords>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_get_parcel_info",
+            description="Get parcel information from GIS systems",
+            triggers=["parcel info", "GIS data", "lot information", "parcel details"],
+            signature=ToolSignature(input="PropertyRef", output="Maybe<ParcelInfo>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_search_recent_sales",
+            description="Search for recent property sales in an area",
+            triggers=["recent sales", "comparable sales", "sold properties"],
+            signature=ToolSignature(input="AreaQuery", output="Maybe<SalesList>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_get_market_trends",
+            description="Get real estate market trends for an area",
+            triggers=["market trends", "housing market", "price trends", "market analysis"],
+            signature=ToolSignature(input="AreaQuery", output="Maybe<MarketTrends>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_investment_brief",
+            description="Generate investment analysis brief for a property",
+            triggers=["investment analysis", "property investment", "ROI analysis"],
+            signature=ToolSignature(input="PropertyRef", output="Maybe<InvestmentBrief>", cost=0)
+        ),
+        ToolMetadata(
+            name="real_estate_compare_properties",
+            description="Compare multiple properties for investment analysis",
+            triggers=["compare properties", "property comparison", "investment comparison"],
+            signature=ToolSignature(input="PropertyList", output="Maybe<Comparison>", cost=0)
+        ),
+    ]
+
     async def main():
         """Run the MCP server."""
+        # Register tools with DCAP for dynamic discovery
+        if DCAP_ENABLED:
+            registered = register_tools_with_dcap(
+                server_id="real-estate-mcp",
+                tools=DCAP_TOOLS,
+                base_command="python servers/real-estate/real-estate-mcp/server.py"
+            )
+            print(f"DCAP: Registered {registered} tools with relay", file=sys.stderr)
+        
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,

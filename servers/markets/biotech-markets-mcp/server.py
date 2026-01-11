@@ -34,6 +34,14 @@ from config import load_config
 from common.config import validate_config_or_raise, ConfigValidationError
 from common.cache import get_cache, build_cache_key
 
+# Import DCAP for tool discovery (https://github.com/boorich/dcap)
+from common.dcap import (
+    register_tools_with_dcap,
+    ToolMetadata,
+    ToolSignature,
+    DCAP_ENABLED,
+)
+
 # Try to import MCP SDK - fallback to basic implementation if not available
 try:
     from mcp.server import Server
@@ -630,8 +638,75 @@ if MCP_AVAILABLE:
                 text=json.dumps({"error": str(e)}, indent=2)
             )]
     
+    # DCAP v3.1 Tool Metadata for semantic discovery
+    DCAP_TOOLS = [
+        ToolMetadata(
+            name="biotech_search_companies",
+            description="Search for biotech companies by therapeutic area, stage, and location",
+            triggers=["biotech companies", "pharma search", "drug companies", "therapeutic area"],
+            signature=ToolSignature(input="CompanySearch", output="Maybe<CompanyList>", cost=0)
+        ),
+        ToolMetadata(
+            name="biotech_get_company_profile",
+            description="Get unified company profile aggregating data from multiple sources",
+            triggers=["company profile", "biotech profile", "pharma company info"],
+            signature=ToolSignature(input="CompanyName", output="Maybe<CompanyProfile>", cost=0)
+        ),
+        ToolMetadata(
+            name="biotech_get_funding_rounds",
+            description="Get funding rounds history for a biotech company",
+            triggers=["funding rounds", "VC funding", "biotech investment", "IPO"],
+            signature=ToolSignature(input="CompanyName", output="Maybe<FundingList>", cost=0)
+        ),
+        ToolMetadata(
+            name="biotech_get_pipeline_drugs",
+            description="Get pipeline drugs for a company from clinical trials",
+            triggers=["drug pipeline", "clinical pipeline", "drugs in development"],
+            signature=ToolSignature(input="CompanyName", output="Maybe<DrugPipeline>", cost=0)
+        ),
+        ToolMetadata(
+            name="biotech_get_investors",
+            description="Get investors/backers for a biotech company",
+            triggers=["biotech investors", "company backers", "VC investors"],
+            signature=ToolSignature(input="CompanyName", output="Maybe<InvestorList>", cost=0)
+        ),
+        ToolMetadata(
+            name="biotech_analyze_target_exposure",
+            description="Analyze companies working on a specific target (e.g., PD-1, HER2)",
+            triggers=["target exposure", "competitive landscape", "drug target", "target analysis"],
+            signature=ToolSignature(input="Target", output="Maybe<TargetExposure>", cost=0)
+        ),
+        ToolMetadata(
+            name="markets.get_timeseries",
+            description="Retrieve historical price data for biotech stocks with OHLCV data",
+            triggers=["stock price", "biotech stock", "market data", "OHLCV", "price history"],
+            signature=ToolSignature(input="TickerQuery", output="Maybe<TimeSeries>", cost=0)
+        ),
+        ToolMetadata(
+            name="generate_biotech_company_dossier",
+            description="Generate comprehensive biotech company dossier from multiple sources",
+            triggers=["company dossier", "biotech report", "company research", "due diligence"],
+            signature=ToolSignature(input="CompanyIdentifier", output="Maybe<Dossier>", cost=0)
+        ),
+        ToolMetadata(
+            name="refine_biotech_dossier",
+            description="Refine and analyze a biotech company dossier based on specific questions",
+            triggers=["refine dossier", "analyze dossier", "dossier question"],
+            signature=ToolSignature(input="DossierQuery", output="Maybe<RefinedDossier>", cost=0)
+        ),
+    ]
+
     async def main():
         """Run the MCP server."""
+        # Register tools with DCAP for dynamic discovery
+        if DCAP_ENABLED:
+            registered = register_tools_with_dcap(
+                server_id="biotech-markets-mcp",
+                tools=DCAP_TOOLS,
+                base_command="python servers/markets/biotech-markets-mcp/server.py"
+            )
+            print(f"DCAP: Registered {registered} tools with relay", file=sys.stderr)
+        
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,

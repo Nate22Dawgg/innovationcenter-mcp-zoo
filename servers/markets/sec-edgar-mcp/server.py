@@ -15,7 +15,36 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 
 # Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
+
+# Import configuration
+from config import load_config, SecEdgarConfig
+from common.config import validate_config_or_raise, ConfigValidationError
+
+# Import DCAP for tool discovery (https://github.com/boorich/dcap)
+from common.dcap import (
+    register_tools_with_dcap,
+    ToolMetadata,
+    ToolSignature,
+    DCAP_ENABLED,
+)
+
+# Import standardized error handling
+try:
+    from common.errors import (
+        McpError,
+        map_upstream_error,
+        format_error_response,
+        ErrorCode,
+    )
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError:
+    ERROR_HANDLING_AVAILABLE = False
+    McpError = Exception
+    map_upstream_error = None
+    format_error_response = None
+    ErrorCode = None
 
 from sec_edgar_client import (
     search_company_cik,
@@ -90,8 +119,16 @@ async def sec_search_company(
             "companies": results[:limit or 20]
         }
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "query": query,
             "count": 0,
             "companies": []
@@ -161,8 +198,16 @@ async def sec_get_company_filings(
             "filings": filings
         }
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "count": 0,
             "filings": []
         }
@@ -209,8 +254,16 @@ async def sec_get_filing_content(
         
         return result
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "cik": cik,
             "accession_number": accession_number
         }
@@ -255,8 +308,16 @@ async def sec_search_filings(
             "filings": results
         }
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "keyword": keyword,
             "count": 0,
             "filings": []
@@ -311,8 +372,16 @@ async def sec_get_company_info(
             "submissions": submissions
         }
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "company_name": company_name,
             "cik": cik,
             "ticker": ticker
@@ -353,8 +422,16 @@ async def sec_extract_financials(
             "note": "Financial extraction uses pattern matching. For comprehensive XBRL data, consider parsing XBRL files directly."
         }
     except Exception as e:
+        # Map to standardized error and return structured response
+        if ERROR_HANDLING_AVAILABLE and map_upstream_error:
+            mcp_error = map_upstream_error(e)
+            return format_error_response(mcp_error)
+        # Fallback for when error handling not available
         return {
-            "error": str(e),
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": str(e) or "An unexpected error occurred"
+            },
             "cik": cik,
             "accession_number": accession_number
         }
@@ -563,8 +640,65 @@ if MCP_AVAILABLE:
                 text=json.dumps({"error": str(e)}, indent=2)
             )]
     
+    # DCAP v3.1 Tool Metadata for semantic discovery
+    DCAP_TOOLS = [
+        ToolMetadata(
+            name="sec_search_company",
+            description="Search for companies by name or ticker symbol",
+            triggers=["SEC company", "find company CIK", "ticker lookup", "company search"],
+            signature=ToolSignature(input="Query", output="Maybe<CompanyList>", cost=0)
+        ),
+        ToolMetadata(
+            name="sec_get_company_filings",
+            description="Get company filings by name or CIK with optional filters",
+            triggers=["SEC filings", "10-K", "10-Q", "8-K", "company filings", "annual report"],
+            signature=ToolSignature(input="FilingsQuery", output="Maybe<FilingsList>", cost=0)
+        ),
+        ToolMetadata(
+            name="sec_get_filing_content",
+            description="Get content of a specific SEC filing",
+            triggers=["filing content", "SEC document", "read filing"],
+            signature=ToolSignature(input="FilingRef", output="Maybe<FilingContent>", cost=0)
+        ),
+        ToolMetadata(
+            name="sec_search_filings",
+            description="Search filings by keyword across all companies",
+            triggers=["search filings", "SEC keyword search", "filing search"],
+            signature=ToolSignature(input="KeywordQuery", output="Maybe<FilingsList>", cost=0)
+        ),
+        ToolMetadata(
+            name="sec_get_company_info",
+            description="Get comprehensive company information including submissions index",
+            triggers=["company info", "SEC company data", "company submissions"],
+            signature=ToolSignature(input="CompanyRef", output="Maybe<CompanyInfo>", cost=0)
+        ),
+        ToolMetadata(
+            name="sec_extract_financials",
+            description="Extract financial data from a filing (10-K, 10-Q)",
+            triggers=["extract financials", "financial data", "SEC financials", "earnings data"],
+            signature=ToolSignature(input="FilingRef", output="Maybe<Financials>", cost=0)
+        ),
+    ]
+
     async def main():
         """Run the MCP server."""
+        # Load and validate configuration (fail-fast by default)
+        try:
+            config = load_config()
+            validate_config_or_raise(config, fail_fast=True)
+        except ConfigValidationError as e:
+            print(f"Configuration validation failed: {e}", file=sys.stderr)
+            sys.exit(1)
+        
+        # Register tools with DCAP for dynamic discovery
+        if DCAP_ENABLED:
+            registered = register_tools_with_dcap(
+                server_id="sec-edgar-mcp",
+                tools=DCAP_TOOLS,
+                base_command="python servers/markets/sec-edgar-mcp/server.py"
+            )
+            print(f"DCAP: Registered {registered} tools with relay", file=sys.stderr)
+        
         async with stdio_server() as (read_stream, write_stream):
             await server.run(
                 read_stream,
