@@ -8,6 +8,12 @@ into unified company profiles.
 from typing import Dict, List, Optional, Any
 from difflib import SequenceMatcher
 
+import sys
+from pathlib import Path
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
 from clinical_trials_client import get_company_trials, get_pipeline_drugs
 from sec_edgar_client import (
     search_company_filings,
@@ -16,11 +22,11 @@ from sec_edgar_client import (
     search_company_cik
 )
 from pubmed_client import search_company_publications
-from cache import Cache
+from common.cache import get_cache, build_cache_key
 
 
 # Initialize cache
-_cache = Cache()
+_cache = get_cache()
 
 
 def _fuzzy_match(name1: str, name2: str, threshold: float = 0.7) -> bool:
@@ -68,10 +74,14 @@ def get_profile(company_name: str, use_cache: bool = True) -> Dict[str, Any]:
     Returns:
         Unified company profile dictionary
     """
-    # Check cache
-    cache_key = {"company_name": company_name}
+    # Check cache (24 hour TTL for company profiles)
     if use_cache:
-        cached = _cache.get("company_profile", cache_key)
+        cache_key = build_cache_key(
+            server_name="biotech-markets-mcp",
+            tool_name="get_profile",
+            args={"company_name": company_name}
+        )
+        cached = _cache.get(cache_key)
         if cached:
             return cached
     
@@ -162,9 +172,14 @@ def get_profile(company_name: str, use_cache: bool = True) -> Dict[str, Any]:
         "has_investor_info": len(profile["investors"]) > 0
     }
     
-    # Cache the result
+    # Cache the result with 24 hour TTL (company profiles update daily)
     if use_cache:
-        _cache.set("company_profile", cache_key, profile)
+        cache_key = build_cache_key(
+            server_name="biotech-markets-mcp",
+            tool_name="get_profile",
+            args={"company_name": company_name}
+        )
+        _cache.set(cache_key, profile, ttl_seconds=24 * 60 * 60)
     
     return profile
 

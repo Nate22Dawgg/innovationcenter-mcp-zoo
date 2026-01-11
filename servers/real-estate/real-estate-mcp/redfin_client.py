@@ -6,9 +6,14 @@ Note: This is a stub implementation - Redfin doesn't have a public API,
 so this would require web scraping or using their public data exports.
 """
 
-import requests
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional
-from cache import Cache
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.cache import get_cache, build_cache_key
 
 
 class RedfinClient:
@@ -16,14 +21,14 @@ class RedfinClient:
     
     DATA_CENTER_URL = "https://www.redfin.com/news/data-center"
     
-    def __init__(self, cache: Optional[Cache] = None):
+    def __init__(self, cache=None):
         """
         Initialize Redfin client.
         
         Args:
-            cache: Optional cache instance
+            cache: Optional cache instance (from common.cache.get_cache())
         """
-        self.cache = cache
+        self.cache = cache or get_cache()
     
     def get_market_trends(self, zip_code: str) -> Dict[str, Any]:
         """
@@ -35,10 +40,15 @@ class RedfinClient:
         Returns:
             Market trends dictionary
         """
-        # Check cache
+        # Check cache (7 day TTL for market trends - updated weekly)
         cache_key = {"zip_code": zip_code}
         if self.cache:
-            cached = self.cache.get("redfin", "market_trends", cache_key, "market_trends")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_market_trends",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -65,9 +75,14 @@ class RedfinClient:
             }
         }
         
-        # Cache stub result
+        # Cache with 7 day TTL (market trends updated weekly)
         if self.cache:
-            self.cache.set("redfin", "market_trends", cache_key, result, "market_trends")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_market_trends",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=7 * 24 * 60 * 60)
         
         return result
     
@@ -82,10 +97,15 @@ class RedfinClient:
         Returns:
             Neighborhood statistics dictionary
         """
-        # Check cache
+        # Check cache (7 day TTL for market trends)
         cache_key = {"city": city, "state": state}
         if self.cache:
-            cached = self.cache.get("redfin", "neighborhood_stats", cache_key, "market_trends")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_neighborhood_stats",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -106,8 +126,14 @@ class RedfinClient:
             }
         }
         
+        # Cache with 7 day TTL
         if self.cache:
-            self.cache.set("redfin", "neighborhood_stats", cache_key, result, "market_trends")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_neighborhood_stats",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=7 * 24 * 60 * 60)
         
         return result
     
@@ -121,10 +147,15 @@ class RedfinClient:
         Returns:
             Price history dictionary
         """
-        # Check cache
+        # Check cache (1 day TTL for recent sales data)
         cache_key = {"address": address}
         if self.cache:
-            cached = self.cache.get("redfin", "price_history", cache_key, "recent_sales")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_price_history",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -137,8 +168,14 @@ class RedfinClient:
             "sales_history": []
         }
         
+        # Cache with 1 day TTL (recent sales update daily)
         if self.cache:
-            self.cache.set("redfin", "price_history", cache_key, result, "recent_sales")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_price_history",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=24 * 60 * 60)
         
         return result
     
@@ -154,10 +191,15 @@ class RedfinClient:
         Returns:
             Recent sales data
         """
-        # Check cache
+        # Check cache (1 day TTL for recent sales - update daily)
         cache_key = {"zip_code": zip_code, "days": days, "limit": limit}
         if self.cache:
-            cached = self.cache.get("redfin", "recent_sales", cache_key, "recent_sales")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="search_recent_sales",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -171,8 +213,14 @@ class RedfinClient:
             "count": 0
         }
         
+        # Cache with 1 day TTL (recent sales update daily)
         if self.cache:
-            self.cache.set("redfin", "recent_sales", cache_key, result, "recent_sales")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="search_recent_sales",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=24 * 60 * 60)
         
         return result
 

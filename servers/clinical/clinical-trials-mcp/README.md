@@ -10,9 +10,10 @@ This MCP server provides full access to the ClinicalTrials.gov API v2 through th
 
 ## Overview
 
-The Clinical Trials MCP Server wraps the ClinicalTrials.gov API v2, providing two main tools:
+The Clinical Trials MCP Server wraps the ClinicalTrials.gov API v2, providing three main tools:
 1. **Search** for clinical trials by various criteria
 2. **Get detailed information** about specific trials by NCT ID
+3. **Match patients to trials** based on condition, demographics, and geography (macro workflow tool)
 
 ## Setup
 
@@ -186,6 +187,28 @@ Returns a dictionary with detailed trial information including:
 }
 ```
 
+### Match Patient to Trials
+
+```python
+# Via MCP protocol
+{
+  "tool": "clinical_trial_matching",
+  "arguments": {
+    "condition": "type 2 diabetes",
+    "demographics": {
+      "age": 55,
+      "sex": "female"
+    },
+    "geography": {
+      "city": "San Francisco",
+      "state": "CA"
+    },
+    "max_results": 15,
+    "max_distance_miles": 50
+  }
+}
+```
+
 ## Testing
 
 ### Test the API Functions
@@ -194,6 +217,14 @@ Run the test script to verify the API functions work correctly:
 
 ```bash
 python test_clinical_trials_api.py
+```
+
+### Test the Matching Tool
+
+Run unit tests for the matching functionality:
+
+```bash
+python test_matching.py
 ```
 
 ### Test the MCP Server
@@ -252,6 +283,8 @@ Input and output schemas are defined in:
 - `schemas/clinical_trials_search_output.json` - Search output schema
 - `schemas/clinical_trials_get_detail.json` - Detail input schema
 - `schemas/clinical_trials_get_detail_output.json` - Detail output schema
+- `schemas/clinical_trial_matching.json` - Matching input schema
+- `schemas/clinical_trial_matching_output.json` - Matching output schema
 
 ## Reference
 

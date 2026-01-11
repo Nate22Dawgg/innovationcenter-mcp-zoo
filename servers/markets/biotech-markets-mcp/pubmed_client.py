@@ -5,7 +5,6 @@ Uses PubMed E-utilities API to search for publications mentioning companies
 in author affiliations or abstracts.
 """
 
-import requests
 import time
 import sys
 from pathlib import Path
@@ -16,6 +15,8 @@ from urllib.parse import quote
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from common.cache import get_cache, build_cache_key
+from common.http import get
+from common.errors import ApiError, map_upstream_error
 
 # PubMed E-utilities API base URL
 PUBMED_BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
@@ -59,8 +60,12 @@ def search_company_publications(company_name: str, limit: int = 20) -> List[Dict
             "sort_order": "desc"
         }
         
-        response = requests.get(ESEARCH_URL, params=search_params, timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=ESEARCH_URL,
+            upstream="pubmed",
+            timeout=10.0,
+            params=search_params
+        )
         data = response.json()
         
         pmids = data.get("esearchresult", {}).get("idlist", [])
@@ -71,7 +76,14 @@ def search_company_publications(company_name: str, limit: int = 20) -> List[Dict
         # Step 2: Fetch publication details
         return get_publication_details(pmids[:limit])
         
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error searching PubMed: {e}")
         return []
 
@@ -99,8 +111,12 @@ def get_publication_details(pmids: List[str]) -> List[Dict[str, Any]]:
             "rettype": "abstract"
         }
         
-        response = requests.get(EFETCH_URL, params=fetch_params, timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=EFETCH_URL,
+            upstream="pubmed",
+            timeout=10.0,
+            params=fetch_params
+        )
         
         # Parse XML response (simplified)
         # In production, would use proper XML parsing (xml.etree.ElementTree)
@@ -141,7 +157,14 @@ def get_publication_details(pmids: List[str]) -> List[Dict[str, Any]]:
         
         return publications
         
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error fetching publication details: {e}")
         return []
 
@@ -187,8 +210,12 @@ def search_by_target(target: str, limit: int = 20) -> List[Dict[str, Any]]:
             "sort_order": "desc"
         }
         
-        response = requests.get(ESEARCH_URL, params=search_params, timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=ESEARCH_URL,
+            upstream="pubmed",
+            timeout=10.0,
+            params=search_params
+        )
         data = response.json()
         
         pmids = data.get("esearchresult", {}).get("idlist", [])
@@ -198,7 +225,14 @@ def search_by_target(target: str, limit: int = 20) -> List[Dict[str, Any]]:
         
         return get_publication_details(pmids[:limit])
         
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error searching PubMed by target: {e}")
         return []
 

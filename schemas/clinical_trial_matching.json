@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clinical Trial Matching Input",
+  "description": "Input schema for matching patients to clinical trials based on condition, demographics, and geography",
+  "type": "object",
+  "required": ["condition"],
+  "properties": {
+    "condition": {
+      "type": "string",
+      "description": "Free text description of the patient's medical condition or disease",
+      "minLength": 1,
+      "examples": ["pancreatic cancer", "type 2 diabetes", "hypertension", "Alzheimer's disease"]
+    },
+    "demographics": {
+      "type": "object",
+      "description": "Patient demographic information for eligibility filtering",
+      "properties": {
+        "age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 150,
+          "description": "Patient age in years"
+        },
+        "sex": {
+          "type": "string",
+          "enum": ["male", "female", "all"],
+          "description": "Patient biological sex"
+        },
+        "biomarkers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional key biomarkers or lab values that may be relevant (e.g., ['HER2+', 'EGFR mutation'])",
+          "examples": [["HER2+", "PD-L1 positive"], ["BRCA1 mutation"]]
+        }
+      },
+      "additionalProperties": false
+    },
+    "geography": {
+      "type": "object",
+      "description": "Patient geographic location for proximity-based ranking",
+      "properties": {
+        "city": {
+          "type": "string",
+          "description": "City name"
+        },
+        "state": {
+          "type": "string",
+          "description": "State or province code (e.g., 'CA', 'NY', 'ON')"
+        },
+        "zip": {
+          "type": "string",
+          "description": "ZIP or postal code"
+        },
+        "country": {
+          "type": "string",
+          "description": "Country name or code (e.g., 'United States', 'US', 'Canada')"
+        }
+      },
+      "additionalProperties": false
+    },
+    "max_results": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 20,
+      "description": "Maximum number of matched trials to return"
+    },
+    "max_distance_miles": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "default": 100,
+      "description": "Maximum distance in miles for proximity filtering (0 = no distance limit)"
+    }
+  },
+  "additionalProperties": false
+}

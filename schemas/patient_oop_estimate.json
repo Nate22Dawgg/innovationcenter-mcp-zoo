@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Patient Out-of-Pocket Estimate Input",
+  "description": "Input schema for estimating patient out-of-pocket costs using hospital pricing and claims/fee schedule data",
+  "type": "object",
+  "properties": {
+    "procedure_codes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "CPT or HCPCS procedure code",
+        "pattern": "^[0-9A-Z]{5}$"
+      },
+      "minItems": 1,
+      "description": "List of CPT/HCPCS procedure codes for the planned procedure(s)"
+    },
+    "patient_demographics": {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 150,
+          "description": "Patient age (optional, for demographic context)"
+        },
+        "zip_code": {
+          "type": "string",
+          "pattern": "^[0-9]{5}(-[0-9]{4})?$",
+          "description": "Patient ZIP code (for geographic pricing context)"
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "US state code (two letters)"
+        }
+      },
+      "description": "Patient demographics for geographic and demographic context"
+    },
+    "facility": {
+      "type": "object",
+      "properties": {
+        "hospital_id": {
+          "type": "string",
+          "description": "Turquoise Health hospital identifier"
+        },
+        "address": {
+          "type": "string",
+          "description": "Hospital address (alternative to hospital_id for location-based search)"
+        },
+        "zip_code": {
+          "type": "string",
+          "pattern": "^[0-9]{5}(-[0-9]{4})?$",
+          "description": "Hospital ZIP code"
+        },
+        "city": {
+          "type": "string",
+          "description": "Hospital city"
+        },
+        "state": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "US state code (two letters)"
+        }
+      },
+      "description": "Facility identifier or location information"
+    },
+    "insurance_plan": {
+      "type": "object",
+      "properties": {
+        "insurance_type": {
+          "type": "string",
+          "enum": ["PPO", "HMO", "EPO", "POS", "self-pay", "Medicare", "Medicaid"],
+          "description": "High-level insurance plan type (not actual PHI)"
+        },
+        "deductible": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Annual deductible amount remaining (if applicable)"
+        },
+        "coinsurance_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Coinsurance percentage (e.g., 20.0 for 20%)"
+        },
+        "copay": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Fixed copay amount per procedure (if applicable)"
+        },
+        "out_of_pocket_max": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Annual out-of-pocket maximum"
+        },
+        "deductible_met": {
+          "type": "boolean",
+          "description": "Whether the annual deductible has already been met"
+        }
+      },
+      "description": "Insurance plan parameters (high-level, not actual PHI)"
+    }
+  },
+  "required": ["procedure_codes"],
+  "additionalProperties": false
+}

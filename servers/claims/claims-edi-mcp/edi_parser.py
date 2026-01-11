@@ -17,15 +17,23 @@ Security:
 
 import re
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
 
 try:
     from common.phi import mark_ephemeral
+    from common.identifiers import normalize_cpt_code, normalize_hcpcs_code, normalize_npi
 except ImportError:
     # Fallback if common module not available
     def mark_ephemeral(data: Dict[str, Any], reason: Optional[str] = None) -> Dict[str, Any]:
         return data
+    # Fallback normalization functions
+    def normalize_cpt_code(code: str) -> str:
+        return code.strip() if code else ""
+    def normalize_hcpcs_code(code: str) -> str:
+        return code.strip().upper() if code else ""
+    def normalize_npi(npi: Union[str, int]) -> str:
+        return str(npi).strip() if npi else ""
 
 
 # X12 EDI Segment Delimiters
@@ -207,9 +215,20 @@ def normalize_claim_line_item(line_item: Dict[str, Any]) -> Dict[str, Any]:
             "description": str
         }
     """
+    # Extract and normalize procedure code
+    proc_code = line_item.get("procedure_code", line_item.get("cpt_code", line_item.get("hcpcs_code", "")))
+    # Try to normalize as CPT first, then HCPCS
+    if proc_code:
+        normalized_proc_code = normalize_cpt_code(proc_code)
+        # If CPT normalization didn't work (not 5 digits), try HCPCS
+        if not normalized_proc_code or len(normalized_proc_code) != 5 or not normalized_proc_code.isdigit():
+            normalized_proc_code = normalize_hcpcs_code(proc_code)
+    else:
+        normalized_proc_code = ""
+    
     normalized = {
         "line_number": line_item.get("line_number", line_item.get("sequence", 0)),
-        "procedure_code": line_item.get("procedure_code", line_item.get("cpt_code", line_item.get("hcpcs_code", ""))),
+        "procedure_code": normalized_proc_code,
         "procedure_modifier": line_item.get("modifier", line_item.get("procedure_modifier", "")),
         "diagnosis_code": line_item.get("diagnosis_code", line_item.get("diagnosis", "")),
         "units": float(line_item.get("units", line_item.get("quantity", 1.0))),
@@ -245,16 +264,21 @@ def extract_cpt_codes(claim: Dict[str, Any]) -> List[str]:
     line_items = claim.get("line_items", [])
     for item in line_items:
         proc_code = item.get("procedure_code", "")
-        if proc_code and _is_cpt_code(proc_code):
-            if proc_code not in cpt_codes:
-                cpt_codes.append(proc_code)
+        if proc_code:
+            normalized = normalize_cpt_code(proc_code)
+            # Only add if it's a valid CPT code (5 digits)
+            if normalized and len(normalized) == 5 and normalized.isdigit():
+                if normalized not in cpt_codes:
+                    cpt_codes.append(normalized)
     
     # Check claim-level codes
     claim_data = claim.get("claim", {})
     proc_code = claim_data.get("procedure_code", "")
-    if proc_code and _is_cpt_code(proc_code):
-        if proc_code not in cpt_codes:
-            cpt_codes.append(proc_code)
+    if proc_code:
+        normalized = normalize_cpt_code(proc_code)
+        if normalized and len(normalized) == 5 and normalized.isdigit():
+            if normalized not in cpt_codes:
+                cpt_codes.append(normalized)
     
     return sorted(cpt_codes)
 
@@ -275,16 +299,21 @@ def extract_hcpcs_codes(claim: Dict[str, Any]) -> List[str]:
     line_items = claim.get("line_items", [])
     for item in line_items:
         proc_code = item.get("procedure_code", "")
-        if proc_code and _is_hcpcs_code(proc_code):
-            if proc_code not in hcpcs_codes:
-                hcpcs_codes.append(proc_code)
+        if proc_code:
+            normalized = normalize_hcpcs_code(proc_code)
+            # Only add if it's a valid HCPCS code (5 chars, starts with letter)
+            if normalized and len(normalized) == 5 and normalized[0].isalpha():
+                if normalized not in hcpcs_codes:
+                    hcpcs_codes.append(normalized)
     
     # Check claim-level codes
     claim_data = claim.get("claim", {})
     proc_code = claim_data.get("procedure_code", "")
-    if proc_code and _is_hcpcs_code(proc_code):
-        if proc_code not in hcpcs_codes:
-            hcpcs_codes.append(proc_code)
+    if proc_code:
+        normalized = normalize_hcpcs_code(proc_code)
+        if normalized and len(normalized) == 5 and normalized[0].isalpha():
+            if normalized not in hcpcs_codes:
+                hcpcs_codes.append(normalized)
     
     return sorted(hcpcs_codes)
 
@@ -342,10 +371,11 @@ def _extract_provider(segments: List[List[str]]) -> Dict[str, Any]:
     provider_segments = _find_segments(segments, "NM1")
     for seg in provider_segments:
         if len(seg) > 2 and seg[1] == "85":  # 85 = Billing Provider
+            npi_raw = seg[9] if len(seg) > 9 else ""
             return {
                 "entity_type": "85",
                 "name": seg[3] if len(seg) > 3 else "",
-                "npi": seg[9] if len(seg) > 9 else "",
+                "npi": normalize_npi(npi_raw) if npi_raw else "",
                 "tax_id": ""
             }
     return {}
@@ -413,10 +443,11 @@ def _extract_payee(segments: List[List[str]]) -> Dict[str, Any]:
     payee_segments = _find_segments(segments, "NM1")
     for seg in payee_segments:
         if len(seg) > 2 and seg[1] == "PE":  # PE = Payee
+            npi_raw = seg[9] if len(seg) > 9 else ""
             return {
                 "entity_type": "PE",
                 "name": seg[3] if len(seg) > 3 else "",
-                "npi": seg[9] if len(seg) > 9 else ""
+                "npi": normalize_npi(npi_raw) if npi_raw else ""
             }
     return {}
 

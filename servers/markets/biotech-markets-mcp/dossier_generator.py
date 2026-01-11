@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from common.cache import get_cache, build_cache_key
 from common.errors import ErrorCode, McpError, map_upstream_error
+from common.identifiers import normalize_cik
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -293,13 +294,9 @@ async def generate_biotech_company_dossier(
         try:
             cik = search_company_cik(company_name)
             if cik:
-                dossier["identifiers"]["cik"] = cik
-                # Format CIK as 10-digit zero-padded
-                try:
-                    cik_int = int(cik)
-                    dossier["identifiers"]["cik_formatted"] = f"{cik_int:010d}"
-                except (ValueError, TypeError):
-                    dossier["identifiers"]["cik_formatted"] = cik
+                dossier["identifiers"]["cik"] = normalize_cik(cik)
+                # Format CIK as 10-digit zero-padded (deprecated, use cik field)
+                dossier["identifiers"]["cik_formatted"] = normalize_cik(cik)
         except Exception as e:
             dossier["metadata"]["data_quality"]["sec_edgar"] = f"error: {str(e)}"
     

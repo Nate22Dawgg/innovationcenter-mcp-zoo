@@ -14,9 +14,17 @@ For official API documentation and access:
 """
 
 import os
+import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
-import requests
 from datetime import datetime
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.http import get, post, CallOptions, call_upstream
+from common.errors import ApiError, map_upstream_error
+from common.cache import get_cache, build_cache_key
 
 
 class SPGlobalClient:
@@ -59,12 +67,11 @@ class SPGlobalClient:
             "https://api.spglobal.com/marketintelligence/v1"
         )
         
-        self.session = requests.Session()
-        self.session.headers.update({
+        self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json"
-        })
+        }
     
     def _make_request(
         self,
@@ -74,7 +81,7 @@ class SPGlobalClient:
         data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Make HTTP request to S&P Global API.
+        Make HTTP request to S&P Global API using common HTTP wrapper.
         
         Args:
             endpoint: API endpoint path
@@ -86,23 +93,49 @@ class SPGlobalClient:
             JSON response as dictionary
         
         Raises:
-            requests.RequestException: If API request fails
+            ApiError: For API errors (handled by common/http wrapper)
         """
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         
         try:
             if method.upper() == "GET":
-                response = self.session.get(url, params=params)
+                response = get(
+                    url=url,
+                    upstream="sp_global",
+                    timeout=10.0,
+                    headers=self.headers,
+                    params=params,
+                    allow_retries=True
+                )
             elif method.upper() == "POST":
-                response = self.session.post(url, params=params, json=data)
+                options = CallOptions(
+                    method="POST",
+                    url=url,
+                    upstream="sp_global",
+                    timeout=10.0,
+                    headers=self.headers,
+                    params=params,
+                    json=data,
+                    allow_retries=False  # POST is not idempotent
+                )
+                response = call_upstream(options)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
-            response.raise_for_status()
             return response.json()
         
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"S&P Global API request failed: {str(e)}")
+        except ApiError as e:
+            # Re-raise ApiError as-is (already standardized)
+            raise
+        except Exception as e:
+            # Map unexpected errors to structured errors
+            mapped_error = map_upstream_error(e)
+            if mapped_error:
+                raise mapped_error
+            raise ApiError(
+                message=f"S&P Global API request failed: {str(e)}",
+                original_error=e
+            )
     
     def search_companies(
         self,
@@ -239,14 +272,30 @@ class SPGlobalClient:
         Returns:
             Dictionary with company profile data
         """
+        # Check cache first (24 hour TTL for company profiles - update daily)
+        cache = get_cache()
+        cache_key = build_cache_key(
+            server_name="sp-global-mcp",
+            tool_name="get_company_profile",
+            args={"company_id": company_id}
+        )
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+        
         # TODO: Replace with actual S&P Global API endpoint
         # Example endpoint structure (verify with S&P Global documentation):
         # response = self._make_request(f"/companies/{company_id}/profile")
         
         # Stub implementation - replace with actual API call
-        return {
+        result = {
             "company_id": company_id,
             "profile": {},
             "note": "This is a stub implementation. Replace with actual S&P Global API integration."
         }
+        
+        # Cache result with 24 hour TTL (company profiles update daily)
+        cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
+        
+        return result
 

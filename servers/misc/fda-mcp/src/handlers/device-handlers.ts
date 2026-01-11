@@ -6,6 +6,7 @@
  */
 
 import { fdaAPIClient } from '../utils/api-client.js';
+import { mapUpstreamError, formatErrorResponse } from '../utils/errors.js';
 
 /**
  * Handles searching FDA 510(k) device clearances
@@ -30,7 +31,15 @@ export async function handleSearchDevice510K(args: any) {
       ]
     };
   } catch (error) {
-    throw new Error(`Device 510(k) search failed: ${(error as Error).message}`);
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(errorResponse, null, 2)
+      }],
+      isError: true
+    };
   }
 }
 
@@ -57,7 +66,15 @@ export async function handleSearchDeviceClassifications(args: any) {
       ]
     };
   } catch (error) {
-    throw new Error(`Device classification search failed: ${(error as Error).message}`);
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(errorResponse, null, 2)
+      }],
+      isError: true
+    };
   }
 }
 
@@ -84,7 +101,15 @@ export async function handleSearchDeviceAdverseEvents(args: any) {
       ]
     };
   } catch (error) {
-    throw new Error(`Device adverse event search failed: ${(error as Error).message}`);
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(errorResponse, null, 2)
+      }],
+      isError: true
+    };
   }
 }
 
@@ -111,7 +136,15 @@ export async function handleSearchDeviceRecalls(args: any) {
       ]
     };
   } catch (error) {
-    throw new Error(`Device recall search failed: ${(error as Error).message}`);
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(errorResponse, null, 2)
+      }],
+      isError: true
+    };
   }
 }
 

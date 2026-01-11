@@ -6,23 +6,29 @@ Most counties use ArcGIS REST APIs with standard formats.
 """
 
 import json
-import requests
+import sys
 from typing import Dict, Any, Optional, List
 from pathlib import Path
-from cache import Cache
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.http import get
+from common.errors import ApiError, map_upstream_error
+from common.cache import get_cache, build_cache_key
 
 
 class GISClient:
     """Client for county GIS APIs."""
     
-    def __init__(self, cache: Optional[Cache] = None):
+    def __init__(self, cache=None):
         """
         Initialize GIS client.
         
         Args:
-            cache: Optional cache instance
+            cache: Optional cache instance (from common.cache.get_cache())
         """
-        self.cache = cache
+        self.cache = cache or get_cache()
         self.counties_config = self._load_counties_config()
     
     def _load_counties_config(self) -> Dict[str, Any]:
@@ -45,7 +51,7 @@ class GISClient:
         return None
     
     def _query_arcgis(self, base_url: str, layer: str, where_clause: str, out_fields: str = "*") -> Dict[str, Any]:
-        """Query ArcGIS REST API."""
+        """Query ArcGIS REST API using common HTTP wrapper."""
         url = f"{base_url}/{layer}/query"
         params = {
             "where": where_clause,
@@ -55,10 +61,21 @@ class GISClient:
         }
         
         try:
-            response = requests.get(url, params=params, timeout=30)
-            response.raise_for_status()
+            response = get(
+                url=url,
+                upstream="arcgis",
+                timeout=30.0,
+                params=params
+            )
             return response.json()
+        except ApiError as e:
+            # Re-raise ApiError as-is (already standardized)
+            raise
         except Exception as e:
+            # Map unexpected errors to structured errors
+            mapped_error = map_upstream_error(e)
+            if mapped_error:
+                raise mapped_error
             return {"error": str(e), "status": "error"}
     
     def get_parcel_info(self, address: str, county: str, state: str) -> Dict[str, Any]:
@@ -80,10 +97,15 @@ class GISClient:
                 "supported_counties": list(self.counties_config.keys())
             }
         
-        # Check cache
+        # Check cache (30 day TTL for GIS data - changes infrequently)
         cache_key = {"address": address, "county": county, "state": state}
         if self.cache:
-            cached = self.cache.get("gis", "parcel_info", cache_key, "gis")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_parcel_info",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -127,9 +149,14 @@ class GISClient:
                 "api_info": gis_config
             }
         
-        # Cache result
+        # Cache result with 30 day TTL (GIS data changes infrequently)
         if self.cache:
-            self.cache.set("gis", "parcel_info", cache_key, parcel_data, "gis")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_parcel_info",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, parcel_data, ttl_seconds=30 * 24 * 60 * 60)
         
         return parcel_data
     
@@ -151,10 +178,15 @@ class GISClient:
                 "error": f"County {county}, {state} not yet supported"
             }
         
-        # Check cache
+        # Check cache (30 day TTL for GIS data)
         cache_key = {"parcel_id": parcel_id, "county": county, "state": state}
         if self.cache:
-            cached = self.cache.get("gis", "parcel_map", cache_key, "gis")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_parcel_map",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -192,8 +224,14 @@ class GISClient:
                 "note": f"Parcel map API for {county}, {state} needs implementation"
             }
         
+        # Cache with 30 day TTL
         if self.cache:
-            self.cache.set("gis", "parcel_map", cache_key, map_data, "gis")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_parcel_map",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, map_data, ttl_seconds=30 * 24 * 60 * 60)
         
         return map_data
     

@@ -6,9 +6,17 @@ It normalizes responses into clean JSON structures matching our schema definitio
 """
 
 import json
-import requests
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.http import get
+from common.errors import ApiError, map_upstream_error
+from common.cache import get_cache, build_cache_key
 
 
 # ClinicalTrials.gov API base URL
@@ -88,6 +96,17 @@ def search_trials(params: Dict[str, Any]) -> Dict[str, Any]:
     limit = min(max(1, params.get("limit", 20)), 100)
     offset = max(0, params.get("offset", 0))
     
+    # Check cache first (6 hour TTL for trial searches - data updates regularly)
+    cache = get_cache()
+    cache_key = build_cache_key(
+        server_name="clinical-trials-mcp",
+        tool_name="search_trials",
+        args=params
+    )
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     # Make API request
     url = f"{API_BASE_URL}/studies"
     api_params = {
@@ -98,8 +117,12 @@ def search_trials(params: Dict[str, Any]) -> Dict[str, Any]:
     }
     
     try:
-        response = requests.get(url, params=api_params, timeout=30)
-        response.raise_for_status()
+        response = get(
+            url=url,
+            upstream="clinicaltrials",
+            timeout=30.0,
+            params=api_params
+        )
         data = response.json()
         
         # Normalize response to our schema format
@@ -176,17 +199,35 @@ def search_trials(params: Dict[str, Any]) -> Dict[str, Any]:
         # Get total count (approximate - API doesn't always provide exact)
         total = data.get("totalCount", len(trials))
         
-        return {
+        result = {
             "total": total,
             "count": len(trials),
             "offset": offset,
             "trials": trials
         }
         
-    except requests.exceptions.RequestException as e:
-        raise Exception(f"Failed to search clinical trials: {str(e)}")
+        # Cache result with 6 hour TTL (trial searches update regularly but not constantly)
+        cache.set(cache_key, result, ttl_seconds=6 * 60 * 60)
+        
+        return result
+        
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except (KeyError, ValueError) as e:
-        raise Exception(f"Failed to parse API response: {str(e)}")
+        raise ApiError(
+            message=f"Failed to parse API response: {str(e)}",
+            original_error=e
+        )
+    except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
+        raise ApiError(
+            message=f"Failed to search clinical trials: {str(e)}",
+            original_error=e
+        )
 
 
 def get_trial_detail(nct_id: str) -> Dict[str, Any]:
@@ -207,11 +248,26 @@ def get_trial_detail(nct_id: str) -> Dict[str, Any]:
     if not nct_id.startswith("NCT") or len(nct_id) != 11:
         raise ValueError(f"Invalid NCT ID format: {nct_id}")
     
+    # Check cache first (24 hour TTL for trial details - change infrequently)
+    cache = get_cache()
+    cache_key = build_cache_key(
+        server_name="clinical-trials-mcp",
+        tool_name="get_trial_detail",
+        args={"nct_id": nct_id}
+    )
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     url = f"{API_BASE_URL}/studies/{nct_id}"
     
     try:
-        response = requests.get(url, params={"format": "json"}, timeout=30)
-        response.raise_for_status()
+        response = get(
+            url=url,
+            upstream="clinicaltrials",
+            timeout=30.0,
+            params={"format": "json"}
+        )
         data = response.json()
         
         # Extract study data
@@ -329,12 +385,28 @@ def get_trial_detail(nct_id: str) -> Dict[str, Any]:
             "url": f"https://clinicaltrials.gov/study/{identification.get('nctId', '')}"
         }
         
+        # Cache result with 24 hour TTL (trial details change infrequently)
+        cache.set(cache_key, detail, ttl_seconds=24 * 60 * 60)
+        
         return detail
         
-    except requests.exceptions.RequestException as e:
-        raise Exception(f"Failed to get trial detail: {str(e)}")
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except (KeyError, ValueError) as e:
-        raise Exception(f"Failed to parse API response: {str(e)}")
+        raise ApiError(
+            message=f"Failed to parse API response: {str(e)}",
+            original_error=e
+        )
+    except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
+        raise ApiError(
+            message=f"Failed to get trial detail: {str(e)}",
+            original_error=e
+        )
 
 
 def _normalize_phase(phases: List[str]) -> str:

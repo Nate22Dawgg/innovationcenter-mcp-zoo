@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
 from common.logging import get_logger
 from common.cache import get_cache, build_cache_key
+from common.identifiers import normalize_ticker, normalize_cik
 
 logger = get_logger(__name__)
 
@@ -203,13 +204,22 @@ class MCPOrchestratorClient:
             logger.info("Returning cached analysis result")
             return cached_result
         
-        # Gather data from multiple sources
+        # Normalize identifiers
         company_name = identifier.get("company_name")
-        ticker = identifier.get("ticker")
-        cik = identifier.get("cik")
+        ticker = normalize_ticker(identifier.get("ticker", "")) if identifier.get("ticker") else None
+        cik = normalize_cik(identifier.get("cik", "")) if identifier.get("cik") else None
+        
+        # Create normalized identifier dict for downstream calls
+        normalized_identifier = {}
+        if company_name:
+            normalized_identifier["company_name"] = company_name
+        if ticker:
+            normalized_identifier["ticker"] = ticker
+        if cik:
+            normalized_identifier["cik"] = cik
         
         results = {
-            "identifier": identifier,
+            "identifier": normalized_identifier,  # Use normalized identifiers in response
             "financials": None,
             "clinical": None,
             "sec": None,
@@ -220,7 +230,7 @@ class MCPOrchestratorClient:
         # Get biotech markets data (includes financials and pipeline)
         if include_financials:
             try:
-                markets_data = self._get_biotech_markets_data(identifier)
+                markets_data = self._get_biotech_markets_data(normalized_identifier)
                 if markets_data:
                     results["financials"] = {
                         "company_name": markets_data.get("company_name"),
@@ -239,7 +249,7 @@ class MCPOrchestratorClient:
         # Get SEC data
         if include_sec:
             try:
-                sec_data = self._get_sec_data(identifier)
+                sec_data = self._get_sec_data(normalized_identifier)
                 if sec_data:
                     results["sec"] = sec_data
             except Exception as e:

@@ -5,11 +5,19 @@ Uses free SEC EDGAR API (data.sec.gov) - no authentication required.
 Rate limit: 10 requests per second (enforced).
 """
 
-import requests
 import time
 import re
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.http import get
+from common.errors import ApiError, map_upstream_error
+from common.identifiers import normalize_cik, normalize_ticker
 
 
 # SEC EDGAR API base URLs
@@ -50,8 +58,12 @@ def search_company_cik(company_name: str) -> Optional[str]:
     
     try:
         # Get company tickers JSON
-        response = requests.get(COMPANY_TICKERS_URL, headers=_get_headers(), timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=COMPANY_TICKERS_URL,
+            upstream="sec_edgar",
+            timeout=10.0,
+            headers=_get_headers()
+        )
         data = response.json()
         
         company_name_lower = company_name.lower()
@@ -63,10 +75,17 @@ def search_company_cik(company_name: str) -> Optional[str]:
                 if company_name_lower in title or title in company_name_lower:
                     cik = str(ticker_data.get("cik_str", ""))
                     if cik:
-                        return cik.zfill(10)  # Zero-pad to 10 digits
+                        return normalize_cik(cik)  # Zero-pad to 10 digits
         
         return None
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error searching for CIK: {e}")
         return None
 
@@ -84,24 +103,35 @@ def get_company_ticker_info(ticker: str) -> Optional[Dict[str, Any]]:
     _rate_limit()
     
     try:
-        response = requests.get(COMPANY_TICKERS_URL, headers=_get_headers(), timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=COMPANY_TICKERS_URL,
+            upstream="sec_edgar",
+            timeout=10.0,
+            headers=_get_headers()
+        )
         data = response.json()
         
-        ticker_upper = ticker.upper()
+        ticker_normalized = normalize_ticker(ticker)
         
         for ticker_data in data.values():
             if isinstance(ticker_data, dict):
-                if ticker_data.get("ticker", "").upper() == ticker_upper:
+                if normalize_ticker(ticker_data.get("ticker", "")) == ticker_normalized:
                     return {
-                        "cik": str(ticker_data.get("cik_str", "")).zfill(10),
+                        "cik": normalize_cik(ticker_data.get("cik_str", "")),
                         "ticker": ticker_data.get("ticker", ""),
                         "title": ticker_data.get("title", ""),
                         "exchange": ticker_data.get("exchange", "")
                     }
         
         return None
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error getting ticker info: {e}")
         return None
 
@@ -120,10 +150,21 @@ def get_company_submissions(cik: str) -> Dict[str, Any]:
     
     try:
         url = f"{SEC_BASE_URL}/submissions/CIK{cik}.json"
-        response = requests.get(url, headers=_get_headers(), timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=url,
+            upstream="sec_edgar",
+            timeout=10.0,
+            headers=_get_headers()
+        )
         return response.json()
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error getting submissions: {e}")
         return {}
 
@@ -236,8 +277,12 @@ def get_filing_content(cik: str, accession_number: str) -> Optional[Dict[str, An
         # For now, try the .txt file directly
         url = f"{SEC_BASE_URL}/files/data/{cik}/{accession_number}/{accession_number}.txt"
         
-        response = requests.get(url, headers=_get_headers(), timeout=30)
-        response.raise_for_status()
+        response = get(
+            url=url,
+            upstream="sec_edgar",
+            timeout=30.0,
+            headers=_get_headers()
+        )
         
         content = response.text
         
@@ -248,7 +293,14 @@ def get_filing_content(cik: str, accession_number: str) -> Optional[Dict[str, An
             "content_length": len(content),
             "url": url
         }
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error getting filing content: {e}")
         return None
 
@@ -280,8 +332,12 @@ def search_filings_by_keyword(
     
     try:
         # Get all companies and search by name
-        response = requests.get(COMPANY_TICKERS_URL, headers=_get_headers(), timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=COMPANY_TICKERS_URL,
+            upstream="sec_edgar",
+            timeout=10.0,
+            headers=_get_headers()
+        )
         data = response.json()
         
         keyword_lower = keyword.lower()
@@ -291,7 +347,7 @@ def search_filings_by_keyword(
             if isinstance(ticker_data, dict):
                 title = ticker_data.get("title", "").lower()
                 if keyword_lower in title:
-                    cik = str(ticker_data.get("cik_str", "")).zfill(10)
+                    cik = normalize_cik(ticker_data.get("cik_str", ""))
                     
                     # Get recent filings
                     filings = get_filings_by_cik(cik, form_type=form_type, limit=5)
@@ -316,7 +372,14 @@ def search_filings_by_keyword(
                         break
         
         return results[:limit]
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error searching filings: {e}")
         return []
 

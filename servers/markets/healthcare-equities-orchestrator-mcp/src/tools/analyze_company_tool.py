@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 from src.clients.mcp_orchestrator_client import MCPOrchestratorClient
 from common.errors import ErrorCode, format_error_response, map_upstream_error, ValidationError
 from common.logging import get_logger
+from common.identifiers import normalize_ticker, normalize_cik
 
 logger = get_logger(__name__)
 
@@ -66,10 +67,14 @@ def analyze_company_across_markets_and_clinical(
             }
         }
     
-    # Validate that at least one identifier is provided
-    ticker = identifier.get("ticker")
+    # Normalize and validate identifiers
+    ticker_raw = identifier.get("ticker")
     company_name = identifier.get("company_name")
-    cik = identifier.get("cik")
+    cik_raw = identifier.get("cik")
+    
+    # Normalize identifiers
+    ticker = normalize_ticker(ticker_raw) if ticker_raw else None
+    cik = normalize_cik(cik_raw) if cik_raw else None
     
     if not ticker and not company_name and not cik:
         return {
@@ -81,10 +86,19 @@ def analyze_company_across_markets_and_clinical(
         }
     
     try:
+        # Build normalized identifier dict
+        normalized_identifier = {}
+        if company_name:
+            normalized_identifier["company_name"] = company_name
+        if ticker:
+            normalized_identifier["ticker"] = ticker
+        if cik:
+            normalized_identifier["cik"] = cik
+        
         # Call the orchestrator client
-        logger.info(f"Analyzing company with identifier: {identifier}")
+        logger.info(f"Analyzing company with identifier: {normalized_identifier}")
         result = client.analyze_company(
-            identifier=identifier,
+            identifier=normalized_identifier,
             include_financials=include_financials,
             include_clinical=include_clinical,
             include_sec=include_sec

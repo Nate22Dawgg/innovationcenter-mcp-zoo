@@ -224,17 +224,11 @@ async def generate_property_investment_brief(
         PropertyInvestmentBrief dictionary
     """
     if router is None:
-        from cache import Cache
-        cache = Cache()
+        cache = get_cache()
         router = DataSourceRouter(cache=cache)
     
     # Use common cache for expensive lookups
-    try:
-        cache = get_cache()
-    except:
-        # Fallback to local cache if common cache not available
-        from cache import Cache
-        cache = Cache()
+    cache = get_cache()
     server_name = "real-estate-mcp"
     
     result = {
@@ -420,8 +414,7 @@ async def compare_properties(
         PropertyComparison dictionary with per-property metrics and summary
     """
     if router is None:
-        from cache import Cache
-        cache = Cache()
+        cache = get_cache()
         router = DataSourceRouter(cache=cache)
     
     result = {

@@ -10,6 +10,7 @@ This server wraps the Turquoise Health API to provide access to hospital pricing
 - Get hospital rate sheets for specific facilities
 - Compare prices across multiple facilities
 - Estimate cash price ranges for procedures
+- **Estimate patient out-of-pocket costs using hospital pricing + CMS fee schedules** (macro tool)
 
 ## 📋 Status
 
@@ -158,6 +159,77 @@ Estimate cash price range for a procedure in a location.
 
 **Output:**
 Returns estimated cash price range with statistics (min, max, median, average).
+
+#### 5. `hospital_prices_estimate_patient_out_of_pocket`
+
+Estimate patient out-of-pocket costs for procedures at a specific hospital based on insurance benefits (hospital pricing only).
+
+**Input:**
+- `procedure_codes` (required): List of CPT/HCPCS procedure codes
+- `hospital_id` (required): Turquoise Health hospital identifier
+- `insurance_type` (optional): Insurance type (e.g., "PPO", "HMO", "self-pay")
+- `deductible` (optional): Annual deductible amount remaining
+- `coinsurance_percent` (optional): Coinsurance percentage (e.g., 20.0 for 20%)
+- `copay` (optional): Fixed copay amount
+- `out_of_pocket_max` (optional): Annual out-of-pocket maximum
+
+**Output:**
+Returns estimated OOP costs, assumptions, and risk flags based on hospital pricing data.
+
+#### 6. `patient_oop_estimate_macro` ⭐ **NEW MACRO TOOL**
+
+**High-value workflow tool** that estimates patient out-of-pocket costs using **both hospital pricing AND CMS fee schedule data**. This macro tool combines:
+
+- **Hospital pricing data** from Turquoise Health API (negotiated rates, cash prices)
+- **CMS fee schedule data** from claims-edi-mcp (allowed amounts, typical reimbursement)
+- **Insurance benefit parameters** to calculate comprehensive OOP estimates
+
+**Input:**
+- `procedure_codes` (required): List of CPT/HCPCS procedure codes
+- `patient_demographics` (optional): Patient demographics (age, zip_code, state)
+- `facility` (optional): Facility identifier or location (hospital_id or address info)
+- `insurance_plan` (optional): Insurance plan parameters (type, deductible, coinsurance, copay, OOP max, deductible_met)
+
+**Example:**
+```json
+{
+  "procedure_codes": ["99213", "27447"],
+  "patient_demographics": {
+    "zip_code": "10001",
+    "state": "NY"
+  },
+  "facility": {
+    "hospital_id": "12345"
+  },
+  "insurance_plan": {
+    "insurance_type": "PPO",
+    "deductible": 1000.0,
+    "deductible_met": false,
+    "coinsurance_percent": 20.0,
+    "out_of_pocket_max": 5000.0
+  }
+}
+```
+
+**Output:**
+Returns comprehensive OOP estimates with:
+- `procedure_summary`: List of procedures with descriptions
+- `price_components`: Breakdown of hospital pricing, CMS fee schedule, allowed amounts, plan pay, and patient pay ranges
+- `assumptions`: Narrative text about deductible, coinsurance assumptions
+- `risk_flags`: List of strings describing uncertainty or missing data
+- `line_item_estimates`: Per-procedure OOP estimates with price sources
+- `total_estimated_oop`: Total min/likely/max OOP estimates
+- `data_sources`: List of data sources used
+
+**Key Features:**
+- ✅ Combines multiple data sources for more accurate estimates
+- ✅ Handles missing data gracefully with risk flags
+- ✅ Supports both CPT and HCPCS codes
+- ✅ Calculates deductible, coinsurance, and OOP max scenarios
+- ✅ Provides low/likely/high estimates for uncertainty
+- ✅ Read-only: no real billing changes
+
+**Note:** This tool requires access to both `hospital-prices-mcp` and `claims-edi-mcp` servers. CMS fee schedule data must be downloaded separately (see claims-edi-mcp documentation).
 
 ## 📊 Example CPT Codes for Testing
 

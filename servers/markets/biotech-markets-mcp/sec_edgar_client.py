@@ -5,7 +5,6 @@ Provides functions to search company filings, extract financial information,
 and find IPO filings (S-1 forms).
 """
 
-import requests
 import time
 import re
 import sys
@@ -17,6 +16,9 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from common.cache import get_cache, build_cache_key
+from common.http import get, CallOptions, call_upstream
+from common.errors import ApiError, ErrorCode, map_upstream_error
+from common.identifiers import normalize_cik, normalize_ticker
 
 # SEC EDGAR API base URL
 SEC_BASE_URL = "https://data.sec.gov"
@@ -68,8 +70,12 @@ def search_company_cik(company_name: str) -> Optional[str]:
     
     try:
         # Get company tickers JSON
-        response = requests.get(COMPANY_TICKERS_URL, headers=_get_headers(), timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=COMPANY_TICKERS_URL,
+            upstream="sec_edgar",
+            timeout=10.0,
+            headers=_get_headers()
+        )
         data = response.json()
         
         company_name_lower = company_name.lower()
@@ -81,7 +87,7 @@ def search_company_cik(company_name: str) -> Optional[str]:
                 if company_name_lower in title or title in company_name_lower:
                     cik = str(ticker_data.get("cik_str", ""))
                     if cik:
-                        result = cik.zfill(10)  # Zero-pad to 10 digits
+                        result = normalize_cik(cik)  # Zero-pad to 10 digits
                         # Cache result (24 hours)
                         _cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
                         return result
@@ -89,7 +95,14 @@ def search_company_cik(company_name: str) -> Optional[str]:
         # Cache None result too (shorter TTL - 1 hour)
         _cache.set(cache_key, None, ttl_seconds=60 * 60)
         return None
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error searching for CIK: {e}")
         return None
 
@@ -146,8 +159,13 @@ def get_filings_by_cik(cik: str, form_type: Optional[str] = None, limit: int = 1
             "output": "json"
         }
         
-        response = requests.get(CIK_LOOKUP_URL, params=params, headers=_get_headers(), timeout=10)
-        response.raise_for_status()
+        response = get(
+            url=CIK_LOOKUP_URL,
+            upstream="sec_edgar",
+            timeout=10.0,
+            headers=_get_headers(),
+            params=params
+        )
         
         # SEC returns HTML or JSON depending on params
         # Try to parse as JSON first
@@ -182,7 +200,14 @@ def get_filings_by_cik(cik: str, form_type: Optional[str] = None, limit: int = 1
             result = []
             _cache.set(cache_key, result, ttl_seconds=12 * 60 * 60)
             return result
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error getting filings: {e}")
         return []
 
@@ -221,8 +246,12 @@ def get_filing_content(cik: str, accession_number: str) -> Optional[Dict[str, An
     try:
         url = f"{SEC_BASE_URL}/files/data/{cik}/{accession_number}/{accession_number}.txt"
         
-        response = requests.get(url, headers=_get_headers(), timeout=30)
-        response.raise_for_status()
+        response = get(
+            url=url,
+            upstream="sec_edgar",
+            timeout=30.0,
+            headers=_get_headers()
+        )
         
         content = response.text
         
@@ -237,7 +266,14 @@ def get_filing_content(cik: str, accession_number: str) -> Optional[Dict[str, An
         # Cache result (24 hours)
         _cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
         return result
+    except ApiError as e:
+        # Re-raise ApiError as-is (already standardized)
+        raise
     except Exception as e:
+        # Map unexpected errors to structured errors
+        mapped_error = map_upstream_error(e)
+        if mapped_error:
+            raise mapped_error
         print(f"Error getting filing content: {e}")
         return None
 

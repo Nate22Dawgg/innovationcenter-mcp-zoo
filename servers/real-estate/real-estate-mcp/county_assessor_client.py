@@ -6,23 +6,27 @@ Each county has different API formats - this client handles variations.
 """
 
 import json
-import requests
+import sys
 from typing import Dict, Any, Optional
 from pathlib import Path
-from cache import Cache
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.cache import get_cache, build_cache_key
 
 
 class CountyAssessorClient:
     """Client for county assessor APIs."""
     
-    def __init__(self, cache: Optional[Cache] = None):
+    def __init__(self, cache=None):
         """
         Initialize county assessor client.
         
         Args:
-            cache: Optional cache instance
+            cache: Optional cache instance (from common.cache.get_cache())
         """
-        self.cache = cache
+        self.cache = cache or get_cache()
         self.counties_config = self._load_counties_config()
     
     def _load_counties_config(self) -> Dict[str, Any]:
@@ -64,10 +68,15 @@ class CountyAssessorClient:
                 "supported_counties": list(self.counties_config.keys())
             }
         
-        # Check cache
+        # Check cache (365 day TTL for assessor data - changes annually)
         cache_key = {"address": address, "county": county, "state": state}
         if self.cache:
-            cached = self.cache.get("county_assessor", "tax_records", cache_key, "assessor")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_tax_records",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -85,9 +94,14 @@ class CountyAssessorClient:
             "tax_history": None
         }
         
-        # Cache stub result (short TTL for stubs)
+        # Cache result with 365 day TTL (assessor data changes annually)
         if self.cache:
-            self.cache.set("county_assessor", "tax_records", cache_key, result, "assessor")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_tax_records",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=365 * 24 * 60 * 60)
         
         return result
     
@@ -109,10 +123,15 @@ class CountyAssessorClient:
                 "error": f"County {county}, {state} not yet supported"
             }
         
-        # Check cache
+        # Check cache (365 day TTL for assessor data)
         cache_key = {"parcel_id": parcel_id, "county": county, "state": state}
         if self.cache:
-            cached = self.cache.get("county_assessor", "assessment", cache_key, "assessor")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_property_assessment",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -128,8 +147,14 @@ class CountyAssessorClient:
             "tax_year": None
         }
         
+        # Cache with 365 day TTL
         if self.cache:
-            self.cache.set("county_assessor", "assessment", cache_key, result, "assessor")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_property_assessment",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=365 * 24 * 60 * 60)
         
         return result
     
@@ -152,10 +177,15 @@ class CountyAssessorClient:
                 "error": f"County {county}, {state} not yet supported"
             }
         
-        # Check cache
+        # Check cache (365 day TTL for assessor data)
         cache_key = {"parcel_id": parcel_id, "county": county, "state": state, "years": years}
         if self.cache:
-            cached = self.cache.get("county_assessor", "tax_history", cache_key, "assessor")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_tax_history",
+                args=cache_key
+            )
+            cached = self.cache.get(cache_key_str)
             if cached:
                 return cached
         
@@ -170,8 +200,14 @@ class CountyAssessorClient:
             "tax_history": []
         }
         
+        # Cache with 365 day TTL
         if self.cache:
-            self.cache.set("county_assessor", "tax_history", cache_key, result, "assessor")
+            cache_key_str = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name="get_tax_history",
+                args=cache_key
+            )
+            self.cache.set(cache_key_str, result, ttl_seconds=365 * 24 * 60 * 60)
         
         return result
 

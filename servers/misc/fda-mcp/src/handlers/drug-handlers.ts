@@ -7,6 +7,8 @@
  */
 
 import { fdaAPIClient } from '../utils/api-client.js';
+import { mapUpstreamError, formatErrorResponse } from '../utils/errors.js';
+import { getConfig } from '../utils/config.js';
 
 /**
  * Search drug adverse events
@@ -37,10 +39,12 @@ export async function handleSearchDrugAdverseEvents(args: any) {
       }]
     };
   } catch (error) {
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
     return {
       content: [{
         type: 'text',
-        text: `Drug adverse events search error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: JSON.stringify(errorResponse, null, 2)
       }],
       isError: true
     };
@@ -76,10 +80,12 @@ export async function handleSearchDrugLabels(args: any) {
       }]
     };
   } catch (error) {
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
     return {
       content: [{
         type: 'text',
-        text: `Drug labels search error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: JSON.stringify(errorResponse, null, 2)
       }],
       isError: true
     };
@@ -115,10 +121,12 @@ export async function handleSearchDrugNDC(args: any) {
       }]
     };
   } catch (error) {
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
     return {
       content: [{
         type: 'text',
-        text: `NDC directory search error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: JSON.stringify(errorResponse, null, 2)
       }],
       isError: true
     };
@@ -154,10 +162,12 @@ export async function handleSearchDrugRecalls(args: any) {
       }]
     };
   } catch (error) {
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
     return {
       content: [{
         type: 'text',
-        text: `Drug recalls search error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: JSON.stringify(errorResponse, null, 2)
       }],
       isError: true
     };
@@ -193,10 +203,12 @@ export async function handleSearchDrugsFDA(args: any) {
       }]
     };
   } catch (error) {
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
     return {
       content: [{
         type: 'text',
-        text: `Drugs@FDA search error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: JSON.stringify(errorResponse, null, 2)
       }],
       isError: true
     };
@@ -232,10 +244,12 @@ export async function handleSearchDrugShortages(args: any) {
       }]
     };
   } catch (error) {
+    const mcpError = mapUpstreamError(error);
+    const errorResponse = formatErrorResponse(mcpError, false);
     return {
       content: [{
         type: 'text',
-        text: `Drug shortages search error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        text: JSON.stringify(errorResponse, null, 2)
       }],
       isError: true
     };

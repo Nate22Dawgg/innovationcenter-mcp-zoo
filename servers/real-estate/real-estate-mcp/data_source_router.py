@@ -10,18 +10,17 @@ from batchdata_client import BatchDataClient
 from county_assessor_client import CountyAssessorClient
 from gis_client import GISClient
 from redfin_client import RedfinClient
-from cache import Cache
 
 
 class DataSourceRouter:
     """Routes queries to appropriate data sources."""
     
-    def __init__(self, cache: Optional[Cache] = None):
+    def __init__(self, cache=None):
         """
         Initialize data source router.
         
         Args:
-            cache: Optional cache instance
+            cache: Optional cache instance (from common.cache.get_cache())
         """
         self.cache = cache
         self.batchdata_client = None  # Lazy initialization (requires API key)

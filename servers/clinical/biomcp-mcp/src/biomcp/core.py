@@ -3,6 +3,8 @@
 from contextlib import asynccontextmanager
 from enum import Enum
 from typing import Any
+import sys
+from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 from mcp.server.fastmcp.utilities.logging import get_logger
@@ -15,12 +17,33 @@ logger = get_logger(__name__)
 # Set up logging filters to suppress non-critical ASGI errors
 setup_logging_filters()
 
+# Import configuration (with fallback if common module not available)
+try:
+    from .config import load_config, BiomcpConfig
+    from common.config import validate_config_or_raise, ConfigValidationError
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+    logger.warning("Common config module not available. Configuration validation will be skipped.")
+
 
 # Define a lifespan function for startup tasks
 @asynccontextmanager
 async def lifespan(mcp):
     """Lifespan context manager for startup/shutdown tasks."""
     # Startup
+    # Load and validate configuration
+    if CONFIG_AVAILABLE:
+        try:
+            config = load_config()
+            validate_config_or_raise(config, fail_fast=False)  # Fail-soft: allow server to start
+            logger.info("Configuration loaded and validated successfully")
+        except ConfigValidationError as e:
+            # Log but don't fail startup (fail-soft behavior)
+            logger.warning(f"Configuration validation found issues: {e}")
+        except Exception as e:
+            logger.warning(f"Failed to load configuration: {e}")
+    
     try:
         from .prefetch import start_prefetching
 

@@ -5,7 +5,6 @@ Provides tools for accessing hospital price transparency data via Turquoise Heal
 """
 
 from .turquoise_client import TurquoiseHealthClient
-from .cache import Cache
 
-__all__ = ["TurquoiseHealthClient", "Cache"]
+__all__ = ["TurquoiseHealthClient"]
 

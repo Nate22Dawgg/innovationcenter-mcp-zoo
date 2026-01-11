@@ -24,7 +24,8 @@ try:
     from clinical_trials_api import search_trials, get_trial_detail
 except ImportError:
     # Fallback: direct API calls if import fails
-    import requests
+    from common.http import get
+    from common.errors import ApiError, map_upstream_error
     API_BASE_URL = "https://clinicaltrials.gov/api/v2"
     
     def search_trials(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -47,8 +48,12 @@ except ImportError:
             "format": "json"
         }
         
-        response = requests.get(url, params=api_params, timeout=30)
-        response.raise_for_status()
+        response = get(
+            url=url,
+            upstream="clinicaltrials",
+            timeout=30.0,
+            params=api_params
+        )
         data = response.json()
         
         trials = []

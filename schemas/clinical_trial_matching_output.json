@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Clinical Trial Matching Output",
+  "description": "Output schema for clinical trial matching results",
+  "type": "object",
+  "properties": {
+    "matches": {
+      "type": "array",
+      "description": "Ranked list of matched clinical trials",
+      "items": {
+        "type": "object",
+        "properties": {
+          "nct_id": {
+            "type": "string",
+            "pattern": "^NCT[0-9]{8}$",
+            "description": "ClinicalTrials.gov identifier"
+          },
+          "title": {
+            "type": "string",
+            "description": "Trial title"
+          },
+          "location_summary": {
+            "type": "string",
+            "description": "Summary of trial locations (e.g., 'Boston, MA; New York, NY')"
+          },
+          "phase": {
+            "type": "string",
+            "description": "Trial phase(s)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current recruitment status"
+          },
+          "why_matched": {
+            "type": "string",
+            "description": "Short explanation of why this trial was matched"
+          },
+          "eligibility_highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Key eligibility criteria highlights relevant to the patient"
+          },
+          "match_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Overall match score (0-100, higher is better)"
+          },
+          "distance_miles": {
+            "type": ["number", "null"],
+            "description": "Approximate distance in miles to nearest trial location (null if geography not provided or location unknown)"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link to trial details page"
+          }
+        },
+        "required": ["nct_id", "title", "phase", "status", "why_matched", "match_score"],
+        "additionalProperties": false
+      }
+    },
+    "query_debug_info": {
+      "type": "object",
+      "description": "Optional debugging information about how queries were derived",
+      "properties": {
+        "search_queries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of search queries used"
+        },
+        "total_candidates": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of candidate trials found before filtering"
+        },
+        "filtered_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of trials after eligibility filtering"
+        },
+        "geography_used": {
+          "type": "boolean",
+          "description": "Whether geography was used for proximity ranking"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["matches"],
+  "additionalProperties": false
+}

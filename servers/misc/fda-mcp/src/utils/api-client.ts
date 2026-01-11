@@ -7,11 +7,8 @@
 
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import { FDAResponse, FDAErrorResponse, SearchParams } from '../types/fda.js';
-
-// FDA API configuration
-const FDA_API_BASE_URL = 'https://api.fda.gov';
-const DEFAULT_LIMIT = 10;
-const MAX_LIMIT = 100;
+import { getConfig } from './config.js';
+import { mapUpstreamError } from './errors.js';
 
 // Rate limiting constants
 const REQUESTS_PER_MINUTE = 240; // With API key
@@ -19,22 +16,22 @@ const REQUESTS_PER_HOUR = 120000; // With API key
 const REQUESTS_PER_MINUTE_NO_KEY = 40; // Without API key
 const REQUESTS_PER_HOUR_NO_KEY = 1000; // Without API key
 
-// API key from environment variable
-const FDA_API_KEY = process.env.FDA_API_KEY || 'sNQRRzbOvngzuFVbiajF6AelXY7QncaX3OKN8YQD';
-
 /**
  * FDA API Client class
  */
 export class FDAAPIClient {
   private axiosInstance: AxiosInstance;
   private hasAPIKey: boolean;
+  private config: ReturnType<typeof getConfig>['config'];
 
   constructor() {
-    this.hasAPIKey = !!FDA_API_KEY;
+    const { config } = getConfig(false); // Use fail-soft mode
+    this.config = config;
+    this.hasAPIKey = !!this.config?.fdaApiKey;
     
     this.axiosInstance = axios.create({
-      baseURL: FDA_API_BASE_URL,
-      timeout: 30000,
+      baseURL: this.config?.fdaApiBaseUrl || 'https://api.fda.gov',
+      timeout: this.config?.requestTimeout || 30000,
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'FDA-MCP-Server/1.0.0',
@@ -54,15 +51,18 @@ export class FDAAPIClient {
   async get<T>(endpoint: string, params: SearchParams = {}): Promise<FDAResponse<T>> {
     // Add API key if available
     const requestParams: any = { ...params };
-    if (this.hasAPIKey) {
-      requestParams.api_key = FDA_API_KEY;
+    if (this.hasAPIKey && this.config?.fdaApiKey) {
+      requestParams.api_key = this.config.fdaApiKey;
     }
 
     // Ensure limit is within bounds
+    const maxLimit = this.config?.maxLimit || 100;
+    const defaultLimit = this.config?.defaultLimit || 10;
+    
     if (requestParams.limit) {
-      requestParams.limit = Math.min(requestParams.limit, MAX_LIMIT);
+      requestParams.limit = Math.min(requestParams.limit, maxLimit);
     } else {
-      requestParams.limit = DEFAULT_LIMIT;
+      requestParams.limit = defaultLimit;
     }
 
     // Remove undefined parameters
@@ -225,32 +225,12 @@ export class FDAAPIClient {
   }
 
   /**
-   * Handles API errors and provides meaningful error messages
+   * Handles API errors and provides meaningful error messages.
+   * Maps errors to standardized MCP error codes.
    */
   private handleAPIError(error: AxiosError): never {
-    if (error.response) {
-      const status = error.response.status;
-      const data = error.response.data as any;
-
-      switch (status) {
-        case 400:
-          throw new Error(`Bad Request: ${data?.error?.message || 'Invalid search parameters'}`);
-        case 404:
-          throw new Error('No results found for the given search criteria');
-        case 429:
-          throw new Error(`Rate limit exceeded. ${this.hasAPIKey ? 'API key rate limits' : 'Consider using an API key for higher limits'}`);
-        case 500:
-          throw new Error('FDA API server error. Please try again later');
-        case 503:
-          throw new Error('FDA API service temporarily unavailable');
-        default:
-          throw new Error(`FDA API error (${status}): ${data?.error?.message || error.message}`);
-      }
-    } else if (error.request) {
-      throw new Error('Network error: Unable to connect to FDA API');
-    } else {
-      throw new Error(`Request error: ${error.message}`);
-    }
+    const mcpError = mapUpstreamError(error);
+    throw mcpError;
   }
 }
 

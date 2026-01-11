@@ -1,0 +1,16 @@
+# Healthcare Equities Orchestrator MCP Server Requirements
+
+# MCP SDK (Model Context Protocol)
+mcp>=0.1.0
+
+# HTTP client (if your server makes HTTP requests)
+requests>=2.31.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# JSON schema validation (optional, for schema validation)
+jsonschema>=4.17.0
+
+# Note: The 'common' package is expected to be available in the parent directory
+# and is imported via sys.path manipulation in the server code.

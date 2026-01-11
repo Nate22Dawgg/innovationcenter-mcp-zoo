@@ -6,9 +6,16 @@ Requires BATCHDATA_API_KEY environment variable.
 """
 
 import os
-import requests
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional, List
-from cache import Cache
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.http import post, CallOptions, call_upstream
+from common.errors import ApiError, map_upstream_error
+from common.cache import get_cache, build_cache_key
 
 
 class BatchDataClient:
@@ -16,13 +23,13 @@ class BatchDataClient:
     
     BASE_URL = "https://api.batchdata.com/api/v1"
     
-    def __init__(self, api_key: Optional[str] = None, cache: Optional[Cache] = None):
+    def __init__(self, api_key: Optional[str] = None, cache=None):
         """
         Initialize BatchData client.
         
         Args:
             api_key: BatchData.io API key (defaults to BATCHDATA_API_KEY env var)
-            cache: Optional cache instance
+            cache: Optional cache instance (from common.cache.get_cache())
         """
         self.api_key = api_key or os.getenv("BATCHDATA_API_KEY")
         if not self.api_key:
@@ -32,7 +39,7 @@ class BatchDataClient:
                 "Please set BATCHDATA_API_KEY in your environment or configuration."
             )
         
-        self.cache = cache
+        self.cache = cache or get_cache()
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -40,30 +47,55 @@ class BatchDataClient:
     
     def _make_request(self, endpoint: str, data: Dict[str, Any], use_cache: bool = True) -> Dict[str, Any]:
         """Make API request with optional caching."""
-        cache_key = {"endpoint": endpoint, "data": data}
+        # TTL: 7 days for property lookup data (conservative default)
+        ttl_seconds = 7 * 24 * 60 * 60
         
         # Check cache
         if use_cache and self.cache:
-            cached = self.cache.get("batchdata", endpoint, cache_key, "property_lookup")
+            cache_key = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name=f"batchdata_{endpoint.replace('/', '_')}",
+                args={"endpoint": endpoint, "data": data}
+            )
+            cached = self.cache.get(cache_key)
             if cached:
                 return cached
         
-        # Make request
-        response = requests.post(
-            f"{self.BASE_URL}{endpoint}",
-            headers=self.headers,
-            json=data,
-            timeout=30
-        )
+        # Make request using common HTTP wrapper
+        url = f"{self.BASE_URL}{endpoint}"
+        try:
+            options = CallOptions(
+                method="POST",
+                url=url,
+                upstream="batchdata",
+                timeout=30.0,
+                headers=self.headers,
+                json=data,
+                allow_retries=False  # POST is not idempotent
+            )
+            response = call_upstream(options)
+            result = response.json()
+        except ApiError as e:
+            # Re-raise ApiError as-is (already standardized)
+            raise
+        except Exception as e:
+            # Map unexpected errors to structured errors
+            mapped_error = map_upstream_error(e)
+            if mapped_error:
+                raise mapped_error
+            raise ApiError(
+                message=f"BatchData API error: {str(e)}",
+                original_error=e
+            )
         
-        if not response.ok:
-            raise Exception(f"BatchData API error: {response.status_code} {response.text}")
-        
-        result = response.json()
-        
-        # Cache result
+        # Cache result with 7 day TTL (property lookup data changes infrequently)
         if use_cache and self.cache:
-            self.cache.set("batchdata", endpoint, cache_key, result, "property_lookup")
+            cache_key = build_cache_key(
+                server_name="real-estate-mcp",
+                tool_name=f"batchdata_{endpoint.replace('/', '_')}",
+                args={"endpoint": endpoint, "data": data}
+            )
+            self.cache.set(cache_key, result, ttl_seconds=ttl_seconds)
         
         return result
     

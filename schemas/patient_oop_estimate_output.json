@@ -1,0 +1,228 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Patient Out-of-Pocket Estimate Output",
+  "description": "Output schema for patient out-of-pocket cost estimates combining hospital pricing and CMS fee schedule data",
+  "type": "object",
+  "properties": {
+    "procedure_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "procedure_code": {
+            "type": "string",
+            "description": "CPT or HCPCS procedure code"
+          },
+          "description": {
+            "type": "string",
+            "description": "Procedure description from CMS fee schedule or hospital data"
+          },
+          "code_type": {
+            "type": "string",
+            "enum": ["CPT", "HCPCS"],
+            "description": "Type of procedure code"
+          }
+        },
+        "required": ["procedure_code"],
+        "additionalProperties": true
+      },
+      "description": "Summary of procedure codes and descriptions"
+    },
+    "price_components": {
+      "type": "object",
+      "properties": {
+        "hospital_pricing": {
+          "type": "object",
+          "properties": {
+            "cash_price_min": {
+              "type": "number",
+              "description": "Minimum cash price from hospital pricing data (in dollars)"
+            },
+            "cash_price_max": {
+              "type": "number",
+              "description": "Maximum cash price from hospital pricing data (in dollars)"
+            },
+            "negotiated_rate_min": {
+              "type": "number",
+              "description": "Minimum negotiated insurance rate (in dollars)"
+            },
+            "negotiated_rate_max": {
+              "type": "number",
+              "description": "Maximum negotiated insurance rate (in dollars)"
+            },
+            "data_available": {
+              "type": "boolean",
+              "description": "Whether hospital pricing data was available"
+            }
+          },
+          "description": "Hospital pricing data from Turquoise Health API"
+        },
+        "cms_fee_schedule": {
+          "type": "object",
+          "properties": {
+            "facility_price": {
+              "type": "number",
+              "description": "CMS facility price (in dollars)"
+            },
+            "non_facility_price": {
+              "type": "number",
+              "description": "CMS non-facility price (in dollars)"
+            },
+            "data_available": {
+              "type": "boolean",
+              "description": "Whether CMS fee schedule data was available"
+            }
+          },
+          "description": "CMS fee schedule pricing data"
+        },
+        "allowed_amount_range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "description": "Estimated minimum allowed amount (in dollars)"
+            },
+            "max": {
+              "type": "number",
+              "description": "Estimated maximum allowed amount (in dollars)"
+            },
+            "likely": {
+              "type": "number",
+              "description": "Estimated likely allowed amount (in dollars)"
+            }
+          },
+          "description": "Estimated allowed amount range based on CMS and hospital data"
+        },
+        "plan_pay_range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "description": "Estimated minimum plan payment (in dollars)"
+            },
+            "max": {
+              "type": "number",
+              "description": "Estimated maximum plan payment (in dollars)"
+            },
+            "likely": {
+              "type": "number",
+              "description": "Estimated likely plan payment (in dollars)"
+            }
+          },
+          "description": "Estimated plan payment range"
+        },
+        "patient_pay_range": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "description": "Estimated minimum patient out-of-pocket cost (in dollars)"
+            },
+            "max": {
+              "type": "number",
+              "description": "Estimated maximum patient out-of-pocket cost (in dollars)"
+            },
+            "likely": {
+              "type": "number",
+              "description": "Estimated likely patient out-of-pocket cost (in dollars)"
+            }
+          },
+          "description": "Estimated patient out-of-pocket cost range"
+        }
+      },
+      "description": "Price components breakdown"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Narrative text describing assumptions made in the calculation (deductible, coinsurance, etc.)"
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of risk flags describing uncertainty or missing data"
+    },
+    "line_item_estimates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "procedure_code": {
+            "type": "string",
+            "description": "Procedure code"
+          },
+          "estimated_oop_min": {
+            "type": "number",
+            "description": "Minimum estimated out-of-pocket cost for this procedure (in dollars)"
+          },
+          "estimated_oop_max": {
+            "type": "number",
+            "description": "Maximum estimated out-of-pocket cost for this procedure (in dollars)"
+          },
+          "estimated_oop_likely": {
+            "type": "number",
+            "description": "Likely estimated out-of-pocket cost for this procedure (in dollars)"
+          },
+          "base_price": {
+            "type": "number",
+            "description": "Base price used for calculation (in dollars)"
+          },
+          "price_source": {
+            "type": "string",
+            "enum": ["hospital_pricing", "cms_fee_schedule", "combined"],
+            "description": "Source of the base price"
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Assumptions specific to this line item"
+          }
+        },
+        "required": ["procedure_code"],
+        "additionalProperties": true
+      },
+      "description": "Per-procedure out-of-pocket estimates"
+    },
+    "total_estimated_oop": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "number",
+          "description": "Total minimum estimated out-of-pocket cost (in dollars)"
+        },
+        "max": {
+          "type": "number",
+          "description": "Total maximum estimated out-of-pocket cost (in dollars)"
+        },
+        "likely": {
+          "type": "number",
+          "description": "Total likely estimated out-of-pocket cost (in dollars)"
+        }
+      },
+      "description": "Total estimated out-of-pocket costs across all procedures"
+    },
+    "data_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of data sources used (e.g., 'Turquoise Health API', 'CMS Fee Schedule')"
+    },
+    "facility_id": {
+      "type": "string",
+      "description": "Hospital identifier used (if available)"
+    },
+    "insurance_type": {
+      "type": "string",
+      "description": "Insurance type used in calculation"
+    }
+  },
+  "required": ["procedure_summary", "price_components", "assumptions", "risk_flags", "line_item_estimates", "total_estimated_oop", "data_sources"],
+  "additionalProperties": true
+}

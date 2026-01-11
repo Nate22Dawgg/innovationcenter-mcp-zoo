@@ -8,9 +8,15 @@ Supports filtering, variable selection, aggregations, and percentile calculation
 
 import json
 import sqlite3
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import pandas as pd
+
+# Add project root to path for common modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
+
+from common.cache import get_cache, build_cache_key
 
 
 def get_db_path(data_dir: Path) -> Path:
@@ -46,10 +52,21 @@ def list_datasets(cycle: str, config_path: Path) -> List[Dict]:
     Returns:
         List of dataset dictionaries
     """
+    # Check cache first (7 day TTL for dataset metadata - changes infrequently)
+    cache = get_cache()
+    cache_key = build_cache_key(
+        server_name="nhanes-mcp",
+        tool_name="list_datasets",
+        args={"cycle": cycle, "config_path": str(config_path)}
+    )
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     # Import here to avoid circular imports
     try:
         from nhanes_data_loader import get_available_datasets
-        return get_available_datasets(cycle, config_path)
+        result = get_available_datasets(cycle, config_path)
     except ImportError:
         # Fallback: read config directly
         with open(config_path, 'r') as f:
@@ -66,7 +83,11 @@ def list_datasets(cycle: str, config_path: Path) -> List[Dict]:
                     "description": dataset["description"],
                     "key_variables": dataset.get("key_variables", [])
                 })
-        return available
+        result = available
+    
+    # Cache result with 7 day TTL (dataset metadata changes infrequently)
+    cache.set(cache_key, result, ttl_seconds=7 * 24 * 60 * 60)
+    return result
 
 
 def get_dataset_info(dataset_id: str, cycle: str, config_path: Path) -> Dict[str, Any]:
@@ -81,6 +102,17 @@ def get_dataset_info(dataset_id: str, cycle: str, config_path: Path) -> Dict[str
     Returns:
         Dataset information dictionary
     """
+    # Check cache first (7 day TTL for dataset info)
+    cache = get_cache()
+    cache_key = build_cache_key(
+        server_name="nhanes-mcp",
+        tool_name="get_dataset_info",
+        args={"dataset_id": dataset_id, "cycle": cycle, "config_path": str(config_path)}
+    )
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     with open(config_path, 'r') as f:
         config = json.load(f)
     
@@ -92,7 +124,7 @@ def get_dataset_info(dataset_id: str, cycle: str, config_path: Path) -> Dict[str
     if cycle not in dataset.get("cycles", []):
         raise ValueError(f"Dataset '{dataset_id}' not available for cycle '{cycle}'")
     
-    return {
+    result = {
         "id": dataset_id,
         "name": dataset["name"],
         "file_prefix": dataset["file_prefix"],
@@ -102,6 +134,10 @@ def get_dataset_info(dataset_id: str, cycle: str, config_path: Path) -> Dict[str
         "cycle": cycle,
         "table_name": get_table_name(cycle, dataset["file_prefix"])
     }
+    
+    # Cache result with 7 day TTL
+    cache.set(cache_key, result, ttl_seconds=7 * 24 * 60 * 60)
+    return result
 
 
 def build_filter_clause(filters: Optional[Dict[str, Any]]) -> tuple:
@@ -258,6 +294,23 @@ def get_variable_info(
     if config_path is None:
         config_path = Path(__file__).parent / "config" / "datasets.json"
     
+    # Check cache first (7 day TTL for variable info/codebooks)
+    cache = get_cache()
+    cache_key = build_cache_key(
+        server_name="nhanes-mcp",
+        tool_name="get_variable_info",
+        args={
+            "dataset_id": dataset_id,
+            "variable": variable,
+            "cycle": cycle,
+            "data_dir": str(data_dir),
+            "config_path": str(config_path)
+        }
+    )
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     # Get dataset info
     dataset_info = get_dataset_info(dataset_id, cycle, config_path)
     table_name = dataset_info["table_name"]
@@ -304,7 +357,7 @@ def get_variable_info(
         cursor.execute(sample_query)
         sample_values = [row[0] for row in cursor.fetchall()]
         
-        return {
+        result = {
             "variable": variable,
             "dataset": dataset_id,
             "cycle": cycle,
@@ -316,6 +369,11 @@ def get_variable_info(
             "distinct_count": stats[5],
             "sample_values": sample_values[:10]
         }
+        
+        # Cache result with 7 day TTL (variable info/codebooks change infrequently)
+        cache.set(cache_key, result, ttl_seconds=7 * 24 * 60 * 60)
+        
+        return result
     finally:
         conn.close()
 

@@ -29,10 +29,7 @@ except ImportError:
     ErrorCode = None
     map_upstream_error = None
 
-try:
-    from .cache import Cache
-except ImportError:
-    from cache import Cache
+from common.cache import get_cache, build_cache_key
 
 
 # Turquoise Health API base URL
@@ -66,7 +63,7 @@ class TurquoiseHealthClient:
         
         # Caching
         self.use_cache = use_cache
-        self.cache = Cache() if use_cache else None
+        self.cache = get_cache() if use_cache else None
     
     def _make_request(
         self,
@@ -232,9 +229,14 @@ class TurquoiseHealthClient:
         if radius:
             params["radius"] = radius
         
-        # Check cache first
+        # Check cache first (24 hour TTL for procedure searches)
         if self.use_cache and self.cache:
-            cached = self.cache.get("/v1/procedures/search", params)
+            cache_key = build_cache_key(
+                server_name="hospital-prices-mcp",
+                tool_name="search_procedure_price",
+                args=params
+            )
+            cached = self.cache.get(cache_key)
             if cached:
                 return cached
         
@@ -242,9 +244,14 @@ class TurquoiseHealthClient:
             response = self._make_request("GET", "/v1/procedures/search", params=params)
             result = self._normalize_search_response(response, cpt_code)
             
-            # Cache result
+            # Cache result with 24 hour TTL (conservative default for pricing data)
             if self.use_cache and self.cache:
-                self.cache.set("/v1/procedures/search", params, result)
+                cache_key = build_cache_key(
+                    server_name="hospital-prices-mcp",
+                    tool_name="search_procedure_price",
+                    args=params
+                )
+                self.cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
             
             return result
         except (ApiError, Exception) as e:
@@ -275,10 +282,15 @@ class TurquoiseHealthClient:
         if cpt_codes:
             params["codes"] = ",".join(cpt_codes)
         
-        # Check cache first
+        # Check cache first (24 hour TTL for hospital rates)
         cache_params = {"hospital_id": hospital_id, **params}
         if self.use_cache and self.cache:
-            cached = self.cache.get(f"/v1/hospitals/{hospital_id}/rates", cache_params)
+            cache_key = build_cache_key(
+                server_name="hospital-prices-mcp",
+                tool_name="get_hospital_rates",
+                args=cache_params
+            )
+            cached = self.cache.get(cache_key)
             if cached:
                 return cached
         
@@ -290,9 +302,14 @@ class TurquoiseHealthClient:
             )
             result = self._normalize_rates_response(response, hospital_id)
             
-            # Cache result
+            # Cache result with 24 hour TTL
             if self.use_cache and self.cache:
-                self.cache.set(f"/v1/hospitals/{hospital_id}/rates", cache_params, result)
+                cache_key = build_cache_key(
+                    server_name="hospital-prices-mcp",
+                    tool_name="get_hospital_rates",
+                    args=cache_params
+                )
+                self.cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
             
             return result
         except (ApiError, Exception) as e:
@@ -338,9 +355,14 @@ class TurquoiseHealthClient:
         if state:
             params["state"] = state.upper()
         
-        # Check cache first
+        # Check cache first (24 hour TTL for price comparisons)
         if self.use_cache and self.cache:
-            cached = self.cache.get("/v1/procedures/compare", params)
+            cache_key = build_cache_key(
+                server_name="hospital-prices-mcp",
+                tool_name="compare_prices",
+                args=params
+            )
+            cached = self.cache.get(cache_key)
             if cached:
                 return cached
         
@@ -348,9 +370,14 @@ class TurquoiseHealthClient:
             response = self._make_request("GET", "/v1/procedures/compare", params=params)
             result = self._normalize_compare_response(response, cpt_code)
             
-            # Cache result
+            # Cache result with 24 hour TTL
             if self.use_cache and self.cache:
-                self.cache.set("/v1/procedures/compare", params, result)
+                cache_key = build_cache_key(
+                    server_name="hospital-prices-mcp",
+                    tool_name="compare_prices",
+                    args=params
+                )
+                self.cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
             
             return result
         except (ApiError, Exception) as e:
@@ -393,9 +420,14 @@ class TurquoiseHealthClient:
         if state:
             params["state"] = state.upper()
         
-        # Check cache first
+        # Check cache first (24 hour TTL for cash price estimates)
         if self.use_cache and self.cache:
-            cached = self.cache.get("/v1/procedures/estimate", params)
+            cache_key = build_cache_key(
+                server_name="hospital-prices-mcp",
+                tool_name="estimate_cash_price",
+                args=params
+            )
+            cached = self.cache.get(cache_key)
             if cached:
                 return cached
         
@@ -403,9 +435,14 @@ class TurquoiseHealthClient:
             response = self._make_request("GET", "/v1/procedures/estimate", params=params)
             result = self._normalize_estimate_response(response, cpt_code)
             
-            # Cache result
+            # Cache result with 24 hour TTL
             if self.use_cache and self.cache:
-                self.cache.set("/v1/procedures/estimate", params, result)
+                cache_key = build_cache_key(
+                    server_name="hospital-prices-mcp",
+                    tool_name="estimate_cash_price",
+                    args=params
+                )
+                self.cache.set(cache_key, result, ttl_seconds=24 * 60 * 60)
             
             return result
         except (ApiError, Exception) as e:
